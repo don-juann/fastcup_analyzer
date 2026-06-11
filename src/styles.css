@@ -201,8 +201,8 @@ body::after {
   letter-spacing: 0.02em;
 }
 
-/* Scoreline chips */
-.scoreline {
+/* Map filter chips */
+.filters {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -212,21 +212,33 @@ body::after {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  font-family: var(--font-ui);
   font-size: 13px;
   padding: 6px 12px;
   border-radius: 9px;
   border: 1px solid var(--line);
+  background: transparent;
   color: var(--muted);
+  cursor: pointer;
+  transition: border-color 0.12s, box-shadow 0.12s, color 0.12s;
 }
+.map:hover { color: var(--ink); }
 .map b {
   font-family: var(--font-mono);
   font-weight: 600;
   font-size: 12.5px;
   letter-spacing: -0.02em;
 }
+.map.all { font-weight: 500; }
 .map.win { border-color: var(--win-line); background: var(--win-bg); color: var(--win-ink); }
 .map.loss { border-color: var(--loss-line); background: var(--loss-bg); color: var(--loss-ink); }
 .map.win b, .map.loss b { color: inherit; }
+.map.active {
+  border-color: var(--accent);
+  color: var(--ink);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+.map.all.active { color: var(--accent); }
 
 /* Table */
 .stats {

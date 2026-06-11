@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { groupIntoSessions, aggregateSession } from './lib/sessions.js'
 import { parseProfileId, fetchRecentMatchList, loadSessionMatches } from './lib/fastcup.js'
 
@@ -79,26 +79,35 @@ function lightScoreline(session, userId) {
 }
 
 function SessionCard({ session, userId, autoLoad }) {
-  const [full, setFull] = useState(null) // { sides, scoreline }
+  const [matches, setMatches] = useState(null) // normalized full matches
   const [status, setStatus] = useState('idle') // idle | loading | error
   const [err, setErr] = useState('')
+  const [selected, setSelected] = useState('all') // 'all' | match index
 
-  async function load() {
+  async function ensureLoaded() {
+    if (matches || status === 'loading') return
     setStatus('loading'); setErr('')
     try {
-      const matches = await loadSessionMatches(session)
-      setFull(aggregateSession({ ...session, matches }, userId))
+      setMatches(await loadSessionMatches(session))
       setStatus('done')
     } catch (e) {
       setErr(e.message || String(e)); setStatus('error')
     }
   }
 
-  useEffect(() => { if (autoLoad) load() }, []) // eslint-disable-line
+  useEffect(() => { if (autoLoad) ensureLoaded() }, []) // eslint-disable-line
+
+  function pick(sel) { setSelected(sel); ensureLoaded() }
 
   const d = new Date(session.startedAt)
   const dateLabel = d.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })
-  const scoreline = full ? full.scoreline : lightScoreline(session, userId)
+  const chips = lightScoreline(session, userId) // every map, always shown
+
+  const agg = useMemo(() => {
+    if (!matches) return null
+    const subset = selected === 'all' ? matches : [matches[selected]]
+    return aggregateSession({ ...session, matches: subset }, userId)
+  }, [matches, selected, userId, session])
 
   return (
     <section className="session">
@@ -107,30 +116,40 @@ function SessionCard({ session, userId, autoLoad }) {
         <span className="count">{session.matches.length} matches</span>
       </div>
 
-      <div className="scoreline">
-        {scoreline.map((m, i) => (
-          <span key={i} className={`map ${m.won ? 'win' : 'loss'}`}>
+      <div className="filters">
+        <button
+          className={`map all ${selected === 'all' ? 'active' : ''}`}
+          onClick={() => pick('all')}
+        >
+          all maps
+        </button>
+        {chips.map((m, i) => (
+          <button
+            key={i}
+            className={`map ${m.won ? 'win' : 'loss'} ${selected === i ? 'active' : ''}`}
+            onClick={() => pick(i)}
+          >
             {m.mapName} <b>{m.you}:{m.opp}</b>
-          </span>
+          </button>
         ))}
       </div>
 
-      {!full && status !== 'loading' && (
-        <button className="load-btn" onClick={load}>load full player stats</button>
-      )}
       {status === 'loading' && <p className="note">loading scoreboards…</p>}
       {status === 'error' && <p className="error">{err}</p>}
+      {!matches && status === 'idle' && (
+        <p className="note">select a map (or “all maps”) to load player stats</p>
+      )}
 
-      {full && (
+      {agg && (
         <table className="stats">
           <thead>
             <tr>{COLS.map(([k, label]) => <th key={k} className={k === 'nick' ? 'l' : ''}>{label}</th>)}</tr>
           </thead>
-          {full.sides.map((side) => (
+          {agg.sides.map((side) => (
             <tbody key={side.key} className="team-group">
               <tr className="team-row">
                 <td className="l" colSpan={COLS.length - 1}>{side.label}</td>
-                <td className="team-record">{side.wins}/{full.matchCount} won</td>
+                <td className="team-record">{side.wins}/{agg.matchCount} won</td>
               </tr>
               {side.players.map((p) => <StatRow key={p.playerId} p={p} userId={userId} />)}
             </tbody>
