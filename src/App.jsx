@@ -1,0 +1,161 @@
+import { useEffect, useState } from 'react'
+import { groupIntoSessions, aggregateSession } from './lib/sessions.js'
+import { parseProfileId, fetchRecentMatchList, loadSessionMatches } from './lib/fastcup.js'
+
+export default function App() {
+  const [link, setLink] = useState('https://cs2.fastcup.net/id685178')
+  const [userId, setUserId] = useState(null)
+  const [sessions, setSessions] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [theme, setTheme] = useState('light')
+
+  useEffect(() => { document.documentElement.dataset.theme = theme }, [theme])
+
+  async function onSubmit(e) {
+    e.preventDefault()
+    setError(''); setLoading(true); setSessions(null)
+    try {
+      const uid = parseProfileId(link)
+      const list = await fetchRecentMatchList(uid)
+      if (!list.length) throw new Error('No recent matches found for this profile')
+      setUserId(uid)
+      setSessions(groupIntoSessions(list))
+    } catch (err) {
+      setError(err.message || String(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="page">
+      <header className="head">
+        <div>
+          <h1>fastcup session analyzer<span className="dot">.</span></h1>
+          <p className="sub">recent matches, grouped into sessions, combined into one table</p>
+        </div>
+        <button
+          type="button"
+          className="theme-toggle"
+          onClick={() => setTheme((t) => (t === 'light' ? 'dark' : 'light'))}
+          aria-label="Toggle theme"
+        >
+          {theme === 'light' ? '☾ dark' : '☀ light'}
+        </button>
+      </header>
+
+      <form className="search" onSubmit={onSubmit}>
+        <input
+          value={link}
+          onChange={(e) => setLink(e.target.value)}
+          placeholder="https://cs2.fastcup.net/idXXXXXX"
+          spellCheck={false}
+        />
+        <button type="submit" disabled={loading}>{loading ? 'loading…' : 'analyze'}</button>
+      </form>
+
+      {error && <p className="error">{error}</p>}
+
+      {sessions?.map((s, i) => (
+        <SessionCard key={s.id} session={s} userId={userId} autoLoad={i === 0} />
+      ))}
+    </div>
+  )
+}
+
+const COLS = [
+  ['nick', 'player'], ['kills', 'K'], ['deaths', 'D'], ['assists', 'A'],
+  ['plusMinus', '+/-'], ['adr', 'ADR'], ['sickFrags', 'sick'],
+  ['firstKills', 'FK'], ['firstDeaths', 'FD'], ['clutches', 'CL'],
+]
+
+function lightScoreline(session, userId) {
+  return session.matches.map((m) => {
+    const mine = m.teams.find((t) => t.id === m.myTeamId)
+    const opp = m.teams.find((t) => t.id !== m.myTeamId)
+    return { mapName: m.mapName, you: mine?.score ?? 0, opp: opp?.score ?? 0, won: !!mine?.isWinner }
+  })
+}
+
+function SessionCard({ session, userId, autoLoad }) {
+  const [full, setFull] = useState(null) // { sides, scoreline }
+  const [status, setStatus] = useState('idle') // idle | loading | error
+  const [err, setErr] = useState('')
+
+  async function load() {
+    setStatus('loading'); setErr('')
+    try {
+      const matches = await loadSessionMatches(session)
+      setFull(aggregateSession({ ...session, matches }, userId))
+      setStatus('done')
+    } catch (e) {
+      setErr(e.message || String(e)); setStatus('error')
+    }
+  }
+
+  useEffect(() => { if (autoLoad) load() }, []) // eslint-disable-line
+
+  const d = new Date(session.startedAt)
+  const dateLabel = d.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })
+  const scoreline = full ? full.scoreline : lightScoreline(session, userId)
+
+  return (
+    <section className="session">
+      <div className="session-head">
+        <h2>{dateLabel}</h2>
+        <span className="count">{session.matches.length} matches</span>
+      </div>
+
+      <div className="scoreline">
+        {scoreline.map((m, i) => (
+          <span key={i} className={`map ${m.won ? 'win' : 'loss'}`}>
+            {m.mapName} <b>{m.you}:{m.opp}</b>
+          </span>
+        ))}
+      </div>
+
+      {!full && status !== 'loading' && (
+        <button className="load-btn" onClick={load}>load full player stats</button>
+      )}
+      {status === 'loading' && <p className="note">loading scoreboards…</p>}
+      {status === 'error' && <p className="error">{err}</p>}
+
+      {full && (
+        <table className="stats">
+          <thead>
+            <tr>{COLS.map(([k, label]) => <th key={k} className={k === 'nick' ? 'l' : ''}>{label}</th>)}</tr>
+          </thead>
+          {full.sides.map((side) => (
+            <tbody key={side.key} className="team-group">
+              <tr className="team-row">
+                <td className="l" colSpan={COLS.length - 1}>{side.label}</td>
+                <td className="team-record">{side.wins}/{full.matchCount} won</td>
+              </tr>
+              {side.players.map((p) => <StatRow key={p.playerId} p={p} userId={userId} />)}
+            </tbody>
+          ))}
+        </table>
+      )}
+    </section>
+  )
+}
+
+function StatRow({ p, userId }) {
+  return (
+    <tr className={p.playerId === userId ? 'me' : ''}>
+      {COLS.map(([k]) => {
+        if (k === 'nick') return <td key={k} className="l">{p.nick}</td>
+        if (k === 'adr') {
+          const ok = Number.isFinite(p.adr)
+          return <td key={k} className={ok ? '' : 'muted'}>{ok ? Math.round(p.adr) : '—'}</td>
+        }
+        if (k === 'plusMinus') {
+          const v = p.plusMinus
+          return <td key={k} className={v > 0 ? 'pos' : v < 0 ? 'neg' : ''}>{v > 0 ? `+${v}` : v}</td>
+        }
+        return <td key={k}>{p[k]}</td>
+      })}
+    </tr>
+  )
+}

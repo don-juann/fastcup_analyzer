@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.vercel/
+
+# local-only tooling & dev artifacts
+.claude/
+scripts/
+server/proxy.log
+
+# original drop folder ONLY (anchored to root); public/bg/ stays tracked
+/bg/
+
+# env
+.env
+.env.*
