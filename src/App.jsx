@@ -141,26 +141,48 @@ function SessionCard({ session, userId, autoLoad }) {
       )}
 
       {agg && (
-        <table className="stats">
-          <thead>
-            <tr>{COLS.map(([k, label]) => <th key={k} className={k === 'nick' ? 'l' : ''}>{label}</th>)}</tr>
-          </thead>
-          {agg.sides.map((side) => (
-            <tbody key={side.key} className="team-group">
-              <tr className="team-row">
-                <td className="l" colSpan={COLS.length - 1}>{side.label}</td>
-                <td className="team-record">{side.wins}/{agg.matchCount} won</td>
-              </tr>
-              {side.players.map((p) => <StatRow key={p.playerId} p={p} userId={userId} />)}
-            </tbody>
-          ))}
-        </table>
+        <div className="table-wrap">
+          <table className="stats">
+            <thead>
+              <tr>{COLS.map(([k, label]) => (
+                <th
+                  key={k}
+                  className={k === 'nick' ? 'l' : ''}
+                  title={k === 'sickFrags' ? 'one-shots + no-scopes + airshots + wallbangs' : undefined}
+                >
+                  {label}
+                </th>
+              ))}</tr>
+            </thead>
+            {agg.sides.map((side) => (
+              <tbody key={side.key} className="team-group">
+                <tr className="team-row">
+                  <td className="l" colSpan={COLS.length - 1}>{side.label}</td>
+                  <td className="team-record">{side.wins}/{agg.matchCount} won</td>
+                </tr>
+                {side.players.map((p) => <StatRow key={p.playerId} p={p} userId={userId} />)}
+              </tbody>
+            ))}
+          </table>
+        </div>
       )}
     </section>
   )
 }
 
+const SICK_KINDS = [
+  ['one-shots', 'oneShots'], ['no-scopes', 'noScopes'],
+  ['airshots', 'airShots'], ['wallbangs', 'wallBangs'],
+]
+
 function StatRow({ p, userId }) {
+  const [tip, setTip] = useState(null)
+
+  function showTip(e) {
+    const r = e.currentTarget.getBoundingClientRect()
+    setTip({ x: r.left + r.width / 2, y: r.top })
+  }
+
   return (
     <tr className={p.playerId === userId ? 'me' : ''}>
       {COLS.map(([k]) => {
@@ -172,6 +194,27 @@ function StatRow({ p, userId }) {
         if (k === 'plusMinus') {
           const v = p.plusMinus
           return <td key={k} className={v > 0 ? 'pos' : v < 0 ? 'neg' : ''}>{v > 0 ? `+${v}` : v}</td>
+        }
+        if (k === 'sickFrags') {
+          return (
+            <td
+              key={k}
+              className="sick-cell"
+              onMouseEnter={showTip}
+              onMouseLeave={() => setTip(null)}
+            >
+              {p.sickFrags}
+              {tip && (
+                <span className="tip" style={{ left: tip.x, top: tip.y }}>
+                  {SICK_KINDS.map(([label, key]) => (
+                    <span key={key} className="tip-row">
+                      <span>{label}</span><b>{p[key]}</b>
+                    </span>
+                  ))}
+                </span>
+              )}
+            </td>
+          )
         }
         return <td key={k}>{p[k]}</td>
       })}

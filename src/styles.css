@@ -241,9 +241,21 @@ body::after {
 .map.all.active { color: var(--accent); }
 
 /* Table */
+.table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
 .stats {
   width: 100%;
   border-collapse: collapse;
+}
+/* Keep the player name visible while the stat columns scroll on narrow screens */
+.stats th.l, .stats td.l {
+  position: sticky;
+  left: 0;
+  background: var(--card-solid);
+  z-index: 1;
 }
 .stats th, .stats td {
   padding: 10px 7px;
@@ -266,6 +278,35 @@ body::after {
 .stats td.pos { color: var(--pos); }
 .stats td.neg { color: var(--neg); }
 .stats td.muted { color: var(--line); }
+
+/* Sick-frag breakdown tooltip */
+.sick-cell { cursor: help; }
+.sick-cell { text-decoration: underline dotted color-mix(in srgb, var(--muted) 60%, transparent); text-underline-offset: 3px; }
+.tip {
+  position: fixed;
+  transform: translate(-50%, calc(-100% - 9px));
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 130px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card-solid);
+  box-shadow: var(--shadow);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  pointer-events: none;
+}
+.tip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--muted);
+  text-decoration: none;
+}
+.tip-row b { font-family: var(--font-mono); color: var(--ink); font-weight: 600; }
 
 /* Highlight the searched player's row */
 .stats tr.me td { font-weight: 700; }
@@ -312,3 +353,32 @@ body::after {
   transition: color 0.15s, border-color 0.15s;
 }
 .load-btn:hover { color: var(--ink); border-color: var(--muted); }
+
+/* ---- Mobile ---- */
+html, body { max-width: 100%; overflow-x: hidden; }
+
+@media (max-width: 640px) {
+  body { font-size: 14px; }
+  .page { padding: 26px 12px 64px; }
+
+  .head { gap: 10px; }
+  .head h1 { font-size: 22px; }
+  .sub { font-size: 13px; }
+  .theme-toggle { padding: 7px 11px; font-size: 12px; }
+
+  .search { gap: 8px; margin: 22px 0 6px; }
+  .search input { padding: 11px 13px; font-size: 14px; }
+  .search button { padding: 11px 16px; font-size: 14px; }
+
+  .session { padding: 16px 14px; margin-top: 18px; border-radius: 14px; }
+  .session-head h2 { font-size: 17px; }
+  .filters { gap: 6px; margin: 14px 0 16px; }
+  .map { padding: 5px 10px; font-size: 12px; }
+
+  /* Let the table scroll sideways; tighten cells so most columns are visible */
+  .table-wrap { margin: 0 -14px; padding: 0 14px; }
+  .stats th, .stats td { padding: 9px 8px; font-size: 13px; }
+  .stats th { font-size: 10px; }
+  .stats td.l, .stats th.l { padding-left: 0; }
+  .team-row td { padding-left: 0; }
+}
