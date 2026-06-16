@@ -1,16 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
-import { groupIntoSessions, aggregateSession } from './lib/sessions.js'
-import { parseProfileId, fetchRecentMatchList, loadSessionMatches } from './lib/fastcup.js'
+import { groupIntoSessions, aggregateSession } from '../lib/sessions.js'
+import { parseProfileId, fetchRecentMatchList, loadSessionMatches } from '../lib/fastcup.js'
 
-export default function App() {
+export default function Analyzer() {
   const [link, setLink] = useState('https://cs2.fastcup.net/id685178')
   const [userId, setUserId] = useState(null)
   const [sessions, setSessions] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [theme, setTheme] = useState('light')
-
-  useEffect(() => { document.documentElement.dataset.theme = theme }, [theme])
 
   async function onSubmit(e) {
     e.preventDefault()
@@ -29,21 +26,8 @@ export default function App() {
   }
 
   return (
-    <div className="page">
-      <header className="head">
-        <div>
-          <h1>fastcup session analyzer<span className="dot">.</span></h1>
-          <p className="sub">recent matches, grouped into sessions, combined into one table</p>
-        </div>
-        <button
-          type="button"
-          className="theme-toggle"
-          onClick={() => setTheme((t) => (t === 'light' ? 'dark' : 'light'))}
-          aria-label="Toggle theme"
-        >
-          {theme === 'light' ? '☾ dark' : '☀ light'}
-        </button>
-      </header>
+    <>
+      <p className="sub page-intro">recent matches, grouped into sessions, combined into one table</p>
 
       <form className="search" onSubmit={onSubmit}>
         <input
@@ -60,7 +44,7 @@ export default function App() {
       {sessions?.map((s, i) => (
         <SessionCard key={s.id} session={s} userId={userId} autoLoad={i === 0} />
       ))}
-    </div>
+    </>
   )
 }
 

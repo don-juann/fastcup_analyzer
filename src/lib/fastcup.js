@@ -108,3 +108,30 @@ export async function fetchMatchFull(matchId) {
 export async function loadSessionMatches(session) {
   return Promise.all(session.matches.map((m) => fetchMatchFull(m.id)))
 }
+
+// Just the roster of a match (lightweight — no kills/damages).
+export async function fetchMatchRoster(matchId) {
+  const data = await gql(QUERIES.getMatch, { matchId, gameId: GAME_ID })
+  return (data.match?.members || [])
+    .map((mem) => {
+      const u = mem.private?.user
+      return u ? { id: u.id, nick: u.nickName } : null
+    })
+    .filter(Boolean)
+}
+
+// Distinct players the user has recently played with (teammates + opponents),
+// excluding the user themselves. Scans the rosters of recent matches.
+export async function fetchPlayedWith(userId, maxMatches = 12) {
+  const list = await fetchRecentMatchList(userId, maxMatches)
+  const rosters = await Promise.all(
+    list.slice(0, maxMatches).map((m) => fetchMatchRoster(m.id).catch(() => [])),
+  )
+  const byId = new Map()
+  for (const roster of rosters) {
+    for (const p of roster) {
+      if (p.id !== userId && !byId.has(p.id)) byId.set(p.id, p.nick)
+    }
+  }
+  return [...byId].map(([id, nick]) => ({ id, nick }))
+}
