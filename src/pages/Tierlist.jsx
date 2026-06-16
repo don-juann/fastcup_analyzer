@@ -33,6 +33,7 @@ export default function Tierlist() {
   const [error, setError] = useState('')
   const [saved, setSaved] = useState('saved')
   const [newName, setNewName] = useState('')
+  const [confirmId, setConfirmId] = useState(null)
   const loadedRef = useRef(false)
 
   const sensors = useSensors(
@@ -140,6 +141,8 @@ export default function Tierlist() {
     setNewName('')
   }
 
+  const confirmNick = confirmId ? current.players.find((p) => p.id === confirmId)?.nick : null
+
   function removePlayer(id) {
     setCurrent((c) => {
       const placements = { ...c.placements }
@@ -201,7 +204,7 @@ export default function Tierlist() {
               <Dropzone id={t} className="tier-drop">
                 {byTier[t].map((p) => (
                   <Chip key={p.id} id={p.id} nick={p.nick} self={p.id === selfId}
-                    onRemove={manual ? () => removePlayer(p.id) : null} />
+                    onRemove={manual ? () => setConfirmId(p.id) : null} />
                 ))}
               </Dropzone>
             </div>
@@ -213,13 +216,30 @@ export default function Tierlist() {
           {byTier[POOL].length
             ? byTier[POOL].map((p) => (
               <Chip key={p.id} id={p.id} nick={p.nick} self={p.id === selfId}
-                onRemove={manual ? () => removePlayer(p.id) : null} />
+                onRemove={manual ? () => setConfirmId(p.id) : null} />
             ))
             : <span className="pool-empty">everyone’s ranked 🎉</span>}
         </Dropzone>
 
         <DragOverlay>{activeId ? <Chip id={activeId} nick={nickOf(activeId)} overlay /> : null}</DragOverlay>
       </DndContext>
+
+      {confirmId && (
+        <div className="modal-overlay" onClick={() => setConfirmId(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <p>Remove <b>{confirmNick}</b> from the tierlist?</p>
+            <div className="modal-actions">
+              <button className="btn-ghost" onClick={() => setConfirmId(null)}>cancel</button>
+              <button
+                className="btn-danger"
+                onClick={() => { removePlayer(confirmId); setConfirmId(null) }}
+              >
+                remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

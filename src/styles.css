@@ -529,6 +529,35 @@ body::after {
 .chip-self { border-color: var(--accent); }
 .chip-self .chip-name { color: var(--accent); font-weight: 600; }
 
+/* Confirm modal */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(2px);
+}
+.modal {
+  width: 100%; max-width: 320px;
+  padding: 22px;
+  background: var(--card-solid);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+.modal p { margin: 0 0 18px; font-size: 15px; color: var(--ink); }
+.modal p b { font-weight: 600; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.modal-actions button {
+  padding: 9px 16px; border-radius: 9px;
+  font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+  border: 1px solid var(--line);
+}
+.btn-ghost { background: transparent; color: var(--muted); }
+.btn-ghost:hover { color: var(--ink); border-color: var(--muted); }
+.btn-danger { background: var(--neg); color: #fff; border-color: var(--neg); }
+.btn-danger:hover { filter: brightness(1.06); }
+
 /* ---- Mobile ---- */
 html, body { max-width: 100%; overflow-x: hidden; }
 
