@@ -11,14 +11,28 @@ import { fetchPlayedWith } from '../lib/fastcup.js'
 const TIERS = ['S', 'A', 'B', 'C', 'D', 'F']
 const POOL = 'pool'
 
+const MANUAL_DEFAULTS = [
+  'AD1X', 'AL1ZH', 'a1byn', 'Sanjiro', 'hangover', 'guwappo',
+  'juann', 'w0nder1y', 'arkhatiko', 'VANDAM', 'burger01', 'gunchik',
+].map((nick, i) => ({ id: `m${i}`, nick }))
+
+const emptyBook = () => ({
+  manual: { players: MANUAL_DEFAULTS.map((p) => ({ ...p })), placements: {} },
+  imported: { players: [], placements: {} },
+})
+
+const newId = () => `m-${Math.random().toString(36).slice(2, 9)}`
+
 export default function Tierlist() {
   const { user, ready } = useAuth()
-  const [players, setPlayers] = useState([])      // [{ id(string), nick }]
-  const [placements, setPlacements] = useState({}) // { id: tier }
+  const [book, setBook] = useState(emptyBook)
+  const [mode, setMode] = useState('manual')
   const [activeId, setActiveId] = useState(null)
   const [status, setStatus] = useState('loading') // loading | ready | error
+  const [importing, setImporting] = useState(false)
   const [error, setError] = useState('')
-  const [saved, setSaved] = useState('saved')     // saved | saving
+  const [saved, setSaved] = useState('saved')
+  const [newName, setNewName] = useState('')
   const loadedRef = useRef(false)
 
   const sensors = useSensors(
@@ -26,7 +40,10 @@ export default function Tierlist() {
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 6 } }),
   )
 
-  // Initial load: saved tierlist, or build the pool from fastcup.
+  const selfId = user ? String(user.fastcupId) : null
+  const current = book[mode]
+
+  // Initial load.
   useEffect(() => {
     if (!ready || !user) return
     let cancelled = false
@@ -34,19 +51,18 @@ export default function Tierlist() {
       try {
         const { data } = await api.getTierlist()
         if (cancelled) return
-        if (data?.players?.length) {
-          setPlayers(data.players)
-          setPlacements(data.placements || {})
-          setStatus('ready')
-        } else {
-          setStatus('loading')
-          const pool = await fetchPlayedWith(user.fastcupId)
-          if (cancelled) return
-          const norm = pool.map((p) => ({ id: String(p.id), nick: p.nick }))
-          setPlayers(norm)
-          setPlacements({})
-          setStatus('ready')
+        const loaded = emptyBook()
+        if (data?.manual || data?.imported) {
+          if (data.manual?.players?.length) loaded.manual = data.manual
+          if (data.imported) loaded.imported = data.imported
+          setMode(data.mode === 'imported' ? 'imported' : 'manual')
+        } else if (data?.players?.length) {
+          // migrate old (fastcup-derived) shape -> imported
+          loaded.imported = { players: data.players, placements: data.placements || {} }
+          setMode('imported')
         }
+        setBook(loaded)
+        setStatus('ready')
         loadedRef.current = true
       } catch (e) {
         if (!cancelled) { setError(e.message || String(e)); setStatus('error') }
@@ -55,70 +71,122 @@ export default function Tierlist() {
     return () => { cancelled = true }
   }, [ready, user])
 
-  // Debounced autosave after the first load.
+  // Debounced autosave.
   useEffect(() => {
     if (!loadedRef.current) return
     setSaved('saving')
     const t = setTimeout(() => {
-      api.saveTierlist({ players, placements })
+      api.saveTierlist({ mode, manual: book.manual, imported: book.imported })
         .then(() => setSaved('saved'))
         .catch(() => setSaved('error'))
     }, 600)
     return () => clearTimeout(t)
-  }, [players, placements])
+  }, [book, mode])
+
+  // Lazily import fastcup players when imported mode is first used.
+  useEffect(() => {
+    if (mode === 'imported' && loadedRef.current && !book.imported.players.length && !importing) {
+      importPlayers()
+    }
+  }, [mode]) // eslint-disable-line
+
+  async function importPlayers() {
+    if (!user) return
+    setImporting(true); setError('')
+    try {
+      const pool = await fetchPlayedWith(user.fastcupId)
+      const self = { id: selfId, nick: user.nickname }
+      setBook((b) => {
+        const have = new Set(b.imported.players.map((p) => p.id))
+        const incoming = [self, ...pool.map((p) => ({ id: String(p.id), nick: p.nick }))]
+          .filter((p) => !have.has(p.id))
+        // ensure self is present even if already there with a stale nick
+        const players = b.imported.players.some((p) => p.id === selfId)
+          ? [...b.imported.players, ...incoming.filter((p) => p.id !== selfId)]
+          : [...b.imported.players, ...incoming]
+        return { ...b, imported: { ...b.imported, players } }
+      })
+    } catch (e) {
+      setError(e.message || String(e))
+    } finally {
+      setImporting(false)
+    }
+  }
 
   const byTier = useMemo(() => {
     const m = { [POOL]: [], S: [], A: [], B: [], C: [], D: [], F: [] }
-    for (const p of players) (m[placements[p.id] || POOL] ?? m[POOL]).push(p)
+    for (const p of current.players) (m[current.placements[p.id] || POOL] ?? m[POOL]).push(p)
     return m
-  }, [players, placements])
+  }, [current])
 
-  const nickOf = (id) => players.find((p) => p.id === id)?.nick
+  const nickOf = (id) => current.players.find((p) => p.id === id)?.nick
+
+  function setCurrent(updater) {
+    setBook((b) => ({ ...b, [mode]: updater(b[mode]) }))
+  }
 
   function onDragEnd({ active, over }) {
     setActiveId(null)
     if (!over) return
     const tier = over.id === POOL ? POOL : over.id
-    setPlacements((prev) => ({ ...prev, [active.id]: tier }))
+    setCurrent((c) => ({ ...c, placements: { ...c.placements, [active.id]: tier } }))
   }
 
-  async function refreshPlayers() {
-    if (!user) return
-    setStatus('loading')
-    try {
-      const pool = await fetchPlayedWith(user.fastcupId)
-      setPlayers((prev) => {
-        const have = new Set(prev.map((p) => p.id))
-        const added = pool
-          .map((p) => ({ id: String(p.id), nick: p.nick }))
-          .filter((p) => !have.has(p.id))
-        return [...prev, ...added]
-      })
-      setStatus('ready')
-    } catch (e) {
-      setError(e.message || String(e)); setStatus('error')
-    }
+  function addPlayer(e) {
+    e.preventDefault()
+    const nick = newName.trim()
+    if (!nick) return
+    setCurrent((c) => ({ ...c, players: [...c.players, { id: newId(), nick }] }))
+    setNewName('')
+  }
+
+  function removePlayer(id) {
+    setCurrent((c) => {
+      const placements = { ...c.placements }
+      delete placements[id]
+      return { players: c.players.filter((p) => p.id !== id), placements }
+    })
   }
 
   if (ready && !user) return <Navigate to="/login" replace />
+
+  const manual = mode === 'manual'
 
   return (
     <div className="tl">
       <div className="tl-head">
         <h1>tierlist<span className="dot">.</span></h1>
-        <div className="tl-actions">
-          <span className={`save-state ${saved}`}>
-            {saved === 'saving' ? 'saving…' : saved === 'error' ? 'save failed' : 'saved'}
-          </span>
-          <button className="load-btn" onClick={refreshPlayers} disabled={status === 'loading'}>
-            refresh players
-          </button>
-        </div>
+        <span className={`save-state ${saved}`}>
+          {saved === 'saving' ? 'saving…' : saved === 'error' ? 'save failed' : 'saved'}
+        </span>
       </div>
-      <p className="sub">drag players into a row, from S (best) to F. saved automatically.</p>
+
+      <div className="mode-toggle">
+        <button className={manual ? 'active' : ''} onClick={() => setMode('manual')}>manual</button>
+        <button className={!manual ? 'active' : ''} onClick={() => setMode('imported')}>imported</button>
+      </div>
+
+      <p className="sub">
+        {manual
+          ? 'add or remove names, then drag them from S (best) to F. saved automatically.'
+          : 'players pulled from your recent fastcup matches (you included). drag to rank.'}
+      </p>
+
+      {manual ? (
+        <form className="add-row" onSubmit={addPlayer}>
+          <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="add a name…" maxLength={32} />
+          <button type="submit">add</button>
+        </form>
+      ) : (
+        <button className="load-btn" onClick={importPlayers} disabled={importing}>
+          {importing ? 'importing…' : 'refresh from fastcup'}
+        </button>
+      )}
 
       {status === 'error' && <p className="error">{error}</p>}
-      {status === 'loading' && !players.length && <p className="note">loading the people you’ve played with…</p>}
+      {!manual && importing && !current.players.length && (
+        <p className="note">loading the people you’ve played with…</p>
+      )}
 
       <DndContext
         sensors={sensors}
@@ -131,16 +199,22 @@ export default function Tierlist() {
             <div className={`tier tier-${t}`} key={t}>
               <div className="tier-label">{t}</div>
               <Dropzone id={t} className="tier-drop">
-                {byTier[t].map((p) => <Chip key={p.id} id={p.id} nick={p.nick} />)}
+                {byTier[t].map((p) => (
+                  <Chip key={p.id} id={p.id} nick={p.nick} self={p.id === selfId}
+                    onRemove={manual ? () => removePlayer(p.id) : null} />
+                ))}
               </Dropzone>
             </div>
           ))}
         </div>
 
-        <div className="pool-head">unranked {status === 'loading' && players.length ? '· updating…' : ''}</div>
+        <div className="pool-head">unranked</div>
         <Dropzone id={POOL} className="pool">
           {byTier[POOL].length
-            ? byTier[POOL].map((p) => <Chip key={p.id} id={p.id} nick={p.nick} />)
+            ? byTier[POOL].map((p) => (
+              <Chip key={p.id} id={p.id} nick={p.nick} self={p.id === selfId}
+                onRemove={manual ? () => removePlayer(p.id) : null} />
+            ))
             : <span className="pool-empty">everyone’s ranked 🎉</span>}
         </Dropzone>
 
@@ -150,17 +224,27 @@ export default function Tierlist() {
   )
 }
 
-function Chip({ id, nick, overlay }) {
+function Chip({ id, nick, overlay, self, onRemove }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id })
   return (
     <div
       ref={setNodeRef}
       {...listeners}
       {...attributes}
-      className={`chip${isDragging ? ' dragging' : ''}${overlay ? ' overlay' : ''}`}
+      className={`chip${isDragging ? ' dragging' : ''}${overlay ? ' overlay' : ''}${self ? ' chip-self' : ''}`}
       title={nick}
     >
-      {nick}
+      <span className="chip-name">{nick}</span>
+      {onRemove && (
+        <button
+          className="chip-x"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => { e.stopPropagation(); onRemove() }}
+          aria-label={`remove ${nick}`}
+        >
+          ×
+        </button>
+      )}
     </div>
   )
 }

@@ -489,6 +489,46 @@ body::after {
 .chip.dragging { opacity: 0.35; }
 .chip.overlay { cursor: grabbing; box-shadow: var(--shadow); border-color: var(--accent); }
 
+/* Tierlist mode toggle + add row */
+.mode-toggle {
+  display: inline-flex; gap: 4px;
+  padding: 4px; margin-top: 4px;
+  border: 1px solid var(--line); border-radius: 11px; background: var(--card);
+}
+.mode-toggle button {
+  padding: 6px 16px; border: none; border-radius: 8px;
+  background: transparent; color: var(--muted);
+  font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;
+}
+.mode-toggle button.active { background: var(--accent); color: var(--accent-ink); }
+
+.add-row { display: flex; gap: 8px; margin: 14px 0 4px; max-width: 320px; }
+.add-row input {
+  flex: 1; padding: 9px 12px;
+  border: 1px solid var(--line); border-radius: 10px;
+  background: var(--card-solid); color: var(--ink);
+  font: inherit; font-size: 14px; outline: none;
+}
+.add-row input:focus { border-color: var(--accent); }
+.add-row button {
+  padding: 9px 16px; border: none; border-radius: 10px;
+  background: var(--accent); color: var(--accent-ink);
+  font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+
+/* Chip internals (name + remove × + self marker) */
+.chip { display: inline-flex; align-items: center; gap: 6px; }
+.chip-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px; }
+.chip-x {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; padding: 0;
+  border: none; border-radius: 4px; background: transparent;
+  color: var(--muted); font-size: 15px; line-height: 1; cursor: pointer;
+}
+.chip-x:hover { background: color-mix(in srgb, var(--neg) 18%, transparent); color: var(--neg); }
+.chip-self { border-color: var(--accent); }
+.chip-self .chip-name { color: var(--accent); font-weight: 600; }
+
 /* ---- Mobile ---- */
 html, body { max-width: 100%; overflow-x: hidden; }
 
