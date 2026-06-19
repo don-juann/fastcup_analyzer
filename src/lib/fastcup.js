@@ -173,7 +173,7 @@ export async function fetchDuelData(userId, { months = 6, maxMatches = 60, onPro
 //   players  id -> season totals (kills/deaths/assists/clutches/sick/fk/dmg/rounds/matches)
 //   weapons  weaponId -> total kill count    weaponNames weaponId -> name (from highlights)
 //   best     single-match record holders (matchKills, matchDeaths, …)
-export async function fetchHallOfFameData(userId, { months = 12, maxMatches = 80, onProgress } = {}) {
+export async function fetchHallOfFameData(userId, { months = 6, maxMatches = 80, onProgress } = {}) {
   const gt = new Date(Date.now() - months * 30 * 24 * 60 * 60 * 1000).toISOString()
   const list = await fetchRecentMatchList(userId, maxMatches, { gt })
 
