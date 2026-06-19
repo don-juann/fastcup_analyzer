@@ -13,7 +13,7 @@ export default function Layout() {
   const { user, logout } = useAuth()
   const { lang, setLang, t } = useLang()
   const navigate = useNavigate()
-  const [theme, setTheme] = useState(() => localStorage.getItem('fc-theme') || 'light')
+  const [theme, setTheme] = useState(() => localStorage.getItem('fc-theme') || 'dark')
   const [wallpaper, setWallpaper] = useState(() => localStorage.getItem('fc-wallpaper') || 'inferno')
   const [open, setOpen] = useState(false)
   const ref = useRef(null)

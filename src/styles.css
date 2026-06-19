@@ -1,52 +1,62 @@
+/* ===== Binance design system =====
+   Yellow #FCD535 (black text) is the single accent; trading green/red for
+   up/down; Inter (BinanceNova) + JetBrains Mono (BinancePlex). Light theme =
+   transactional (white canvas, gray-blue hairlines), dark = marketing default. */
+
+/* Light theme (transactional) */
 :root {
-  --bg: #efece6;
-  --card: rgba(251, 250, 247, 0.82);
-  --card-solid: #fbfaf7;
-  --ink: #211f1c;
-  --muted: #8c887f;
-  --line: #e2ddd4;
-  --accent: #c0563a;
-  --accent-ink: #fff;
-  --pos: #3f8f5b;
-  --neg: #cc4b3a;
-  --win-bg: #e9f3ec;
-  --win-line: #c4ddca;
-  --win-ink: #3f8f5b;
-  --loss-bg: #f8ece9;
-  --loss-line: #ecd2cc;
-  --loss-ink: #cc4b3a;
-  --overlay: rgba(239, 236, 230, 0.88);
+  --bg: #fafafa;
+  --card: rgba(255, 255, 255, 0.9);
+  --card-solid: #ffffff;
+  --ink: #181a20;
+  --muted: #707a8a;
+  --line: #eaecef;
+  --accent: #fcd535;
+  --accent-active: #f0b90b;
+  --accent-ink: #181a20;
+  --accent-text: #181a20; /* readable "you/self" text on light */
+  --pos: #0e9f67;
+  --neg: #e8344e;
+  --win-bg: rgba(14, 203, 129, 0.10);
+  --win-line: rgba(14, 203, 129, 0.32);
+  --win-ink: #0a8f5c;
+  --loss-bg: rgba(246, 70, 93, 0.10);
+  --loss-line: rgba(246, 70, 93, 0.32);
+  --loss-ink: #e23950;
+  --overlay: rgba(250, 250, 250, 0.92);
   --bg-blur: 3px;
   --bg-bright: 1;
-  --radius: 16px;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.05);
-  --font-ui: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-display: 'Space Grotesk', var(--font-ui);
+  --radius: 12px;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 20px rgba(0, 0, 0, 0.06);
+  --font-ui: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: var(--font-ui);
   --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
 }
 
-/* Dark theme — palette: #0C0C0C #481E14 #9B3922 #F2613F */
+/* Dark theme (marketing / dashboard default) — canvas #0b0e11, cards #1e2329 */
 :root[data-theme='dark'] {
-  --bg: #0c0c0c;
-  --card: rgba(20, 16, 15, 0.72);
-  --card-solid: #151110;
-  --ink: #f3ece8;
-  --muted: #a08a7f;
-  --line: #2e1f19;
-  --accent: #f2613f;
-  --accent-ink: #1a0d09;
-  --pos: #43d17a;
-  --neg: #f2554d;
-  --win-bg: rgba(67, 209, 122, 0.13);
-  --win-line: rgba(67, 209, 122, 0.38);
-  --win-ink: #43d17a;
-  --loss-bg: rgba(242, 85, 77, 0.13);
-  --loss-line: rgba(242, 85, 77, 0.36);
-  --loss-ink: #f2554d;
-  --overlay: rgba(12, 12, 12, 0.86);
+  --bg: #0b0e11;
+  --card: rgba(30, 35, 41, 0.82);
+  --card-solid: #1e2329;
+  --ink: #eaecef;
+  --muted: #848e9c;
+  --line: #2b3139;
+  --accent: #fcd535;
+  --accent-active: #f0b90b;
+  --accent-ink: #181a20;
+  --accent-text: #fcd535; /* yellow voltage on dark */
+  --pos: #0ecb81;
+  --neg: #f6465d;
+  --win-bg: rgba(14, 203, 129, 0.14);
+  --win-line: rgba(14, 203, 129, 0.40);
+  --win-ink: #0ecb81;
+  --loss-bg: rgba(246, 70, 93, 0.14);
+  --loss-line: rgba(246, 70, 93, 0.40);
+  --loss-ink: #f6465d;
+  --overlay: rgba(11, 14, 17, 0.88);
   --bg-blur: 2px;
-  --bg-bright: 0.55;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 32px rgba(0, 0, 0, 0.35);
+  --bg-bright: 0.5;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 32px rgba(0, 0, 0, 0.4);
 }
 
 * { box-sizing: border-box; }
@@ -133,7 +143,7 @@ body::after {
   flex: 1;
   padding: 13px 16px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--card);
   backdrop-filter: blur(8px);
   color: var(--ink);
@@ -149,7 +159,7 @@ body::after {
 .search button {
   padding: 13px 24px;
   border: none;
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--accent);
   color: var(--accent-ink);
   font-family: var(--font-ui);
@@ -158,8 +168,8 @@ body::after {
   cursor: pointer;
   transition: filter 0.15s, transform 0.05s;
 }
-.search button:hover { filter: brightness(1.06); }
-.search button:active { transform: translateY(1px); }
+.search button:hover { background: var(--accent-active); }
+.search button:active { background: var(--accent-active); transform: translateY(1px); }
 .search button:disabled { opacity: 0.55; cursor: default; }
 
 .note { color: var(--muted); font-size: 13px; margin: 8px 2px 0; }
@@ -313,7 +323,7 @@ body::after {
 
 /* Highlight the searched player's row */
 .stats tr.me td { font-weight: 700; }
-.stats tr.me td.l { color: var(--accent); }
+.stats tr.me td.l { color: var(--accent-text); }
 .stats tr.me td.l::after {
   content: '';
   display: inline-block;
@@ -586,11 +596,11 @@ body::after {
 }
 .chip-x:hover { background: color-mix(in srgb, var(--neg) 18%, transparent); color: var(--neg); }
 .chip-self { border-color: var(--accent); }
-.chip-self .chip-name { color: var(--accent); font-weight: 600; }
+.chip-self .chip-name { color: var(--accent-text); font-weight: 600; }
 
 /* Duels */
 .duel-players { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 20px; }
-.duel-players .map.self { border-color: var(--accent); color: var(--accent); }
+.duel-players .map.self { border-color: var(--accent); color: var(--accent-text); }
 .duel-players .map.self.active { background: var(--accent); color: var(--accent-ink); }
 
 .duel-matrix {
@@ -618,7 +628,7 @@ body::after {
 .duel-matrix td.pos { color: var(--pos); background: color-mix(in srgb, var(--pos) 12%, transparent); }
 .duel-matrix td.neg { color: var(--neg); background: color-mix(in srgb, var(--neg) 12%, transparent); }
 .duel-matrix td.diag { background: color-mix(in srgb, var(--ink) 5%, transparent); }
-.duel-matrix .self { color: var(--accent); }
+.duel-matrix .self { color: var(--accent-text); font-weight: 600; }
 
 /* Hall of fame */
 .hof-empty {
