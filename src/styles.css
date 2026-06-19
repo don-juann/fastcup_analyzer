@@ -611,7 +611,10 @@ body::after {
   position: sticky; left: 0; z-index: 1;
   background: var(--card-solid); min-width: 96px;
 }
-.duel-matrix th.corner { color: var(--muted); font-size: 11px; }
+.duel-matrix th.corner { color: var(--muted); font-size: 11px; line-height: 1.35; }
+.duel-matrix th.corner .corner-k,
+.duel-matrix th.corner .corner-v { display: block; white-space: nowrap; }
+.duel-matrix th.corner .corner-v { color: color-mix(in srgb, var(--muted) 75%, transparent); }
 .duel-matrix td.pos { color: var(--pos); background: color-mix(in srgb, var(--pos) 12%, transparent); }
 .duel-matrix td.neg { color: var(--neg); background: color-mix(in srgb, var(--neg) 12%, transparent); }
 .duel-matrix td.diag { background: color-mix(in srgb, var(--ink) 5%, transparent); }

@@ -6,6 +6,15 @@ import { fetchDuelData } from '../lib/fastcup.js'
 
 const short = (nick) => (nick.length > 9 ? nick.slice(0, 8) + '…' : nick)
 
+// Per-account cache so the tab loads instantly without re-hitting the API.
+const cacheKey = (uid) => `fc-duels-${uid}`
+function loadCache(uid) {
+  try { const r = localStorage.getItem(cacheKey(uid)); return r ? JSON.parse(r) : null } catch { return null }
+}
+function saveCache(uid, data) {
+  try { localStorage.setItem(cacheKey(uid), JSON.stringify({ ts: Date.now(), data })) } catch { /* quota */ }
+}
+
 export default function Duels() {
   const { user, ready } = useAuth()
   const { t } = useLang()
@@ -16,24 +25,33 @@ export default function Duels() {
   const [selected, setSelected] = useState(() => new Set())
   const [nonce, setNonce] = useState(0)
 
+  function applyData(d) {
+    setData(d)
+    const ids = Object.keys(d.appearances).sort((a, b) => d.appearances[b] - d.appearances[a])
+    const sel = new Set(ids.slice(0, 12))
+    const selfId = String(user.fastcupId)
+    if (d.players[selfId]) sel.add(selfId)
+    setSelected(sel)
+    setStatus('ready')
+  }
+
   useEffect(() => {
     if (!ready || !user) return
+    const uid = user.fastcupId
+
+    // On a normal visit (not a manual rescan), use the cached scan if present.
+    if (nonce === 0) {
+      const cached = loadCache(uid)
+      if (cached?.data) { applyData(cached.data); return }
+    }
+
     let cancelled = false
     setStatus('loading'); setError(''); setProgress({ done: 0, total: 0 })
-    fetchDuelData(user.fastcupId, { onProgress: (done, total) => !cancelled && setProgress({ done, total }) })
-      .then((d) => {
-        if (cancelled) return
-        setData(d)
-        const ids = Object.keys(d.appearances).sort((a, b) => d.appearances[b] - d.appearances[a])
-        const sel = new Set(ids.slice(0, 12))
-        const selfId = String(user.fastcupId)
-        if (d.players[selfId]) sel.add(selfId)
-        setSelected(sel)
-        setStatus('ready')
-      })
+    fetchDuelData(uid, { onProgress: (done, total) => !cancelled && setProgress({ done, total }) })
+      .then((d) => { if (cancelled) return; saveCache(uid, d); applyData(d) })
       .catch((e) => { if (!cancelled) { setError(e.message || String(e)); setStatus('error') } })
     return () => { cancelled = true }
-  }, [ready, user, nonce])
+  }, [ready, user, nonce]) // eslint-disable-line
 
   function toggle(id) {
     setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
@@ -89,7 +107,10 @@ export default function Duels() {
               <table className="duel-matrix">
                 <thead>
                   <tr>
-                    <th className="l corner">↓ / →</th>
+                    <th className="l corner">
+                      <span className="corner-k">{t('duels.killer')} ↓</span>
+                      <span className="corner-v">{t('duels.victim')} →</span>
+                    </th>
                     {selIds.map((c) => (
                       <th key={c} className={c === selfId ? 'self' : ''} title={data.players[c]}>{short(data.players[c])}</th>
                     ))}
