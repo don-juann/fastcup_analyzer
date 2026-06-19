@@ -636,6 +636,37 @@ body::after {
   color: var(--muted); font-size: 15px;
   font-family: var(--font-display); letter-spacing: 0.02em;
 }
+.hof-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+.hof-card {
+  background: var(--card);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+}
+.hof-icon { font-size: 22px; line-height: 1; }
+.hof-cat {
+  margin-top: 10px;
+  font-size: 11px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--muted);
+}
+.hof-val {
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 30px; font-weight: 600; line-height: 1.1;
+  color: var(--accent-text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.hof-card.bad .hof-val { color: var(--neg); }
+.hof-who { margin-top: 4px; font-size: 14px; font-weight: 600; color: var(--ink); }
+.hof-ctx { margin-top: 2px; font-size: 12px; color: var(--muted); }
 
 /* Confirm modal */
 .modal-overlay {

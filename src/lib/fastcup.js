@@ -169,6 +169,79 @@ export async function fetchDuelData(userId, { months = 6, maxMatches = 60, onPro
   return { players, appearances, duels, matchCount: list.length }
 }
 
+// Scan the user's last `months` and compute Hall-of-Fame records:
+//   players  id -> season totals (kills/deaths/assists/clutches/sick/fk/dmg/rounds/matches)
+//   weapons  weaponId -> total kill count    weaponNames weaponId -> name (from highlights)
+//   best     single-match record holders (matchKills, matchDeaths, …)
+export async function fetchHallOfFameData(userId, { months = 12, maxMatches = 80, onProgress } = {}) {
+  const gt = new Date(Date.now() - months * 30 * 24 * 60 * 60 * 1000).toISOString()
+  const list = await fetchRecentMatchList(userId, maxMatches, { gt })
+
+  const players = {}
+  const weapons = {}
+  const weaponNames = {}
+  const best = {}
+  const consider = (key, value, holder) => {
+    if (value == null) return
+    const cur = best[key]
+    if (!cur || value > cur.value) best[key] = { value, ...holder }
+  }
+  let done = 0
+
+  await mapPool(list, 6, async (m) => {
+    try {
+      const [detail, kData, dData, cData] = await Promise.all([
+        gql(QUERIES.getMatch, { matchId: m.id, gameId: GAME_ID }),
+        gql(QUERIES.getMatchKills, { matchId: m.id }),
+        gql(QUERIES.getMatchDamages, { matchId: m.id }),
+        gql(QUERIES.getMatchClutches, { matchId: m.id }),
+      ])
+      const match = detail.match
+      if (!match) return
+      const kills = kData.kills || []
+      const roster = (match.members || [])
+        .map((mem) => { const u = mem.private?.user; return u ? { userId: u.id, nick: u.nickName, teamId: mem.matchTeamId } : null })
+        .filter(Boolean)
+      const rounds = (match.teams || []).reduce((n, t) => n + (t.score || 0), 0)
+      const ctx = { map: (match.maps || []).map((x) => mapName(x.mapId)).join(' / '), date: match.startedAt }
+
+      // weapon names from highlights
+      for (const mp of match.maps || []) {
+        for (const h of mp.highlights || []) {
+          for (const w of [h.primaryWeapon, h.secondaryWeapon]) {
+            if (w?.id && w.name) weaponNames[w.id] = w.name
+          }
+        }
+      }
+
+      const ps = computeMatchPlayers(roster, kills, dData.damages || [], cData.clutches || [])
+      for (const p of ps) {
+        const tot = players[p.playerId] || (players[p.playerId] = { nick: p.nick, matches: 0, kills: 0, deaths: 0, assists: 0, clutches: 0, sick: 0, fk: 0, fd: 0, dmg: 0, rounds: 0 })
+        tot.nick = p.nick || tot.nick
+        tot.matches++; tot.kills += p.kills; tot.deaths += p.deaths; tot.assists += p.assists
+        tot.clutches += p.clutches; tot.sick += p.sickFrags; tot.fk += p.firstKills; tot.fd += p.firstDeaths
+        tot.dmg += p.dmg; tot.rounds += rounds
+        const h = { nick: p.nick, playerId: p.playerId, ctx }
+        consider('matchKills', p.kills, h)
+        consider('matchDeaths', p.deaths, h)
+        consider('matchAssists', p.assists, h)
+        consider('matchAdr', rounds > 0 ? Math.round(p.dmg / rounds) : null, h)
+        consider('matchPlusMinus', p.kills - p.deaths, h)
+        consider('matchSick', p.sickFrags, h)
+      }
+
+      for (const k of kills) {
+        if (!k.isTeamkill && k.weaponId && k.killerId && k.killerId !== k.victimId) {
+          weapons[k.weaponId] = (weapons[k.weaponId] || 0) + 1
+        }
+      }
+    } catch { /* skip failed match */ }
+    onProgress?.(++done, list.length)
+  })
+
+  return { players, weapons, weaponNames, best, matchCount: list.length }
+}
+
 // Distinct players the user has recently played with (teammates + opponents),
 // excluding the user themselves. Scans the rosters of recent matches.
 export async function fetchPlayedWith(userId, maxMatches = 12) {
