@@ -5,6 +5,7 @@ import {
   useDraggable, useDroppable,
 } from '@dnd-kit/core'
 import { useAuth } from '../auth.jsx'
+import { useLang } from '../i18n.jsx'
 import { api } from '../lib/api.js'
 import { fetchPlayedWith } from '../lib/fastcup.js'
 
@@ -25,6 +26,7 @@ const newId = () => `m-${Math.random().toString(36).slice(2, 9)}`
 
 export default function Tierlist() {
   const { user, ready } = useAuth()
+  const { t } = useLang()
   const [book, setBook] = useState(emptyBook)
   const [mode, setMode] = useState('manual')
   const [activeId, setActiveId] = useState(null)
@@ -158,37 +160,33 @@ export default function Tierlist() {
   return (
     <div className="tl">
       <div className="tl-head">
-        <h1>tierlist<span className="dot">.</span></h1>
+        <h1>{t('tierlist.title')}<span className="dot">.</span></h1>
         <span className={`save-state ${saved}`}>
-          {saved === 'saving' ? 'saving…' : saved === 'error' ? 'save failed' : 'saved'}
+          {saved === 'saving' ? t('tierlist.saving') : saved === 'error' ? t('tierlist.saveFailed') : t('tierlist.saved')}
         </span>
       </div>
 
       <div className="mode-toggle">
-        <button className={manual ? 'active' : ''} onClick={() => setMode('manual')}>manual</button>
-        <button className={!manual ? 'active' : ''} onClick={() => setMode('imported')}>imported</button>
+        <button className={manual ? 'active' : ''} onClick={() => setMode('manual')}>{t('tierlist.manual')}</button>
+        <button className={!manual ? 'active' : ''} onClick={() => setMode('imported')}>{t('tierlist.imported')}</button>
       </div>
 
-      <p className="sub">
-        {manual
-          ? 'add or remove names, then drag them from S (best) to F. saved automatically.'
-          : 'players pulled from your recent fastcup matches (you included). drag to rank.'}
-      </p>
+      <p className="sub">{manual ? t('tierlist.manualHint') : t('tierlist.importedHint')}</p>
 
       {manual ? (
         <form className="add-row" onSubmit={addPlayer}>
-          <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="add a name…" maxLength={32} />
-          <button type="submit">add</button>
+          <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder={t('tierlist.addName')} maxLength={32} />
+          <button type="submit">{t('tierlist.add')}</button>
         </form>
       ) : (
         <button className="load-btn" onClick={importPlayers} disabled={importing}>
-          {importing ? 'importing…' : 'refresh from fastcup'}
+          {importing ? t('tierlist.importing') : t('tierlist.refresh')}
         </button>
       )}
 
       {status === 'error' && <p className="error">{error}</p>}
       {!manual && importing && !current.players.length && (
-        <p className="note">loading the people you’ve played with…</p>
+        <p className="note">{t('tierlist.loadingPeople')}</p>
       )}
 
       <DndContext
@@ -211,14 +209,14 @@ export default function Tierlist() {
           ))}
         </div>
 
-        <div className="pool-head">unranked</div>
+        <div className="pool-head">{t('tierlist.unranked')}</div>
         <Dropzone id={POOL} className="pool">
           {byTier[POOL].length
             ? byTier[POOL].map((p) => (
               <Chip key={p.id} id={p.id} nick={p.nick} self={p.id === selfId}
                 onRemove={manual ? () => setConfirmId(p.id) : null} />
             ))
-            : <span className="pool-empty">everyone’s ranked 🎉</span>}
+            : <span className="pool-empty">{t('tierlist.allRanked')}</span>}
         </Dropzone>
 
         <DragOverlay>{activeId ? <Chip id={activeId} nick={nickOf(activeId)} overlay /> : null}</DragOverlay>
@@ -227,14 +225,17 @@ export default function Tierlist() {
       {confirmId && (
         <div className="modal-overlay" onClick={() => setConfirmId(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <p>Remove <b>{confirmNick}</b> from the tierlist?</p>
+            <p>
+              {t('tierlist.confirmRemove').split('{name}').flatMap((part, i) =>
+                i === 0 ? [part] : [<b key={i}>{confirmNick}</b>, part])}
+            </p>
             <div className="modal-actions">
-              <button className="btn-ghost" onClick={() => setConfirmId(null)}>cancel</button>
+              <button className="btn-ghost" onClick={() => setConfirmId(null)}>{t('tierlist.cancel')}</button>
               <button
                 className="btn-danger"
                 onClick={() => { removePlayer(confirmId); setConfirmId(null) }}
               >
-                remove
+                {t('tierlist.remove')}
               </button>
             </div>
           </div>

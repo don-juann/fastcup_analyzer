@@ -588,6 +588,42 @@ body::after {
 .chip-self { border-color: var(--accent); }
 .chip-self .chip-name { color: var(--accent); font-weight: 600; }
 
+/* Duels */
+.duel-players { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 20px; }
+.duel-players .map.self { border-color: var(--accent); color: var(--accent); }
+.duel-players .map.self.active { background: var(--accent); color: var(--accent-ink); }
+
+.duel-matrix {
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.duel-matrix th, .duel-matrix td {
+  padding: 7px 9px; min-width: 38px;
+  text-align: center; font-size: 13px;
+  border: 1px solid var(--line);
+  font-family: var(--font-mono); white-space: nowrap;
+}
+.duel-matrix th {
+  font-family: var(--font-ui); font-size: 11px; font-weight: 500; color: var(--muted);
+}
+.duel-matrix th.l, .duel-matrix td.l {
+  text-align: left; font-family: var(--font-ui);
+  position: sticky; left: 0; z-index: 1;
+  background: var(--card-solid); min-width: 96px;
+}
+.duel-matrix th.corner { color: var(--muted); font-size: 11px; }
+.duel-matrix td.pos { color: var(--pos); background: color-mix(in srgb, var(--pos) 12%, transparent); }
+.duel-matrix td.neg { color: var(--neg); background: color-mix(in srgb, var(--neg) 12%, transparent); }
+.duel-matrix td.diag { background: color-mix(in srgb, var(--ink) 5%, transparent); }
+.duel-matrix .self { color: var(--accent); }
+
+/* Hall of fame */
+.hof-empty {
+  margin-top: 60px; text-align: center;
+  color: var(--muted); font-size: 15px;
+  font-family: var(--font-display); letter-spacing: 0.02em;
+}
+
 /* Confirm modal */
 .modal-overlay {
   position: fixed; inset: 0; z-index: 100;

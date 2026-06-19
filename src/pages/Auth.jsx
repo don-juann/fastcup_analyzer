@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
 import { useAuth } from '../auth.jsx'
+import { useLang } from '../i18n.jsx'
 
 export default function Auth() {
   const { user, ready, login, register } = useAuth()
+  const { t } = useLang()
   const navigate = useNavigate()
   const [mode, setMode] = useState('login') // 'login' | 'register'
   const [link, setLink] = useState('')
@@ -32,13 +34,13 @@ export default function Auth() {
   return (
     <div className="auth-card">
       <div className="auth-tabs">
-        <button className={mode === 'login' ? 'active' : ''} onClick={() => { setMode('login'); setError('') }}>log in</button>
-        <button className={mode === 'register' ? 'active' : ''} onClick={() => { setMode('register'); setError('') }}>register</button>
+        <button className={mode === 'login' ? 'active' : ''} onClick={() => { setMode('login'); setError('') }}>{t('auth.login')}</button>
+        <button className={mode === 'register' ? 'active' : ''} onClick={() => { setMode('register'); setError('') }}>{t('auth.register')}</button>
       </div>
 
       <form className="auth-form" onSubmit={onSubmit}>
         <label>
-          <span>fastcup profile link</span>
+          <span>{t('auth.linkLabel')}</span>
           <input
             value={link}
             onChange={(e) => setLink(e.target.value)}
@@ -50,23 +52,23 @@ export default function Auth() {
 
         {mode === 'register' && (
           <label>
-            <span>nickname</span>
+            <span>{t('auth.nickname')}</span>
             <input
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
-              placeholder="how you'll be shown"
+              placeholder={t('auth.nicknamePh')}
               maxLength={32}
             />
           </label>
         )}
 
         <label>
-          <span>password</span>
+          <span>{t('auth.password')}</span>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder={mode === 'register' ? 'at least 6 characters' : '••••••••'}
+            placeholder={mode === 'register' ? t('auth.passwordPhRegister') : t('auth.passwordPhLogin')}
             autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
           />
         </label>
@@ -74,14 +76,12 @@ export default function Auth() {
         {error && <p className="error">{error}</p>}
 
         <button type="submit" className="auth-submit" disabled={busy}>
-          {busy ? '…' : mode === 'register' ? 'create account' : 'log in'}
+          {busy ? '…' : mode === 'register' ? t('auth.createAccount') : t('auth.login')}
         </button>
       </form>
 
       <p className="auth-hint">
-        {mode === 'login'
-          ? 'Your fastcup link identifies you and lets us pull the players you’ve played with.'
-          : 'Register with your fastcup link so your tierlist is filled with people you actually queue with.'}
+        {mode === 'login' ? t('auth.hintLogin') : t('auth.hintRegister')}
       </p>
     </div>
   )

@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { groupIntoSessions, aggregateSession } from '../lib/sessions.js'
 import { parseProfileId, fetchRecentMatchList, loadSessionMatches } from '../lib/fastcup.js'
+import { useLang } from '../i18n.jsx'
 
 export default function Analyzer() {
+  const { t } = useLang()
   const [link, setLink] = useState('https://cs2.fastcup.net/id685178')
   const [userId, setUserId] = useState(null)
   const [sessions, setSessions] = useState(null)
@@ -15,7 +17,7 @@ export default function Analyzer() {
     try {
       const uid = parseProfileId(link)
       const list = await fetchRecentMatchList(uid)
-      if (!list.length) throw new Error('No recent matches found for this profile')
+      if (!list.length) throw new Error(t('analyzer.noMatches'))
       setUserId(uid)
       setSessions(groupIntoSessions(list))
     } catch (err) {
@@ -27,7 +29,7 @@ export default function Analyzer() {
 
   return (
     <>
-      <p className="sub page-intro">recent matches, grouped into sessions, combined into one table</p>
+      <p className="sub page-intro">{t('analyzer.intro')}</p>
 
       <form className="search" onSubmit={onSubmit}>
         <input
@@ -36,7 +38,7 @@ export default function Analyzer() {
           placeholder="https://cs2.fastcup.net/idXXXXXX"
           spellCheck={false}
         />
-        <button type="submit" disabled={loading}>{loading ? 'loading…' : 'analyze'}</button>
+        <button type="submit" disabled={loading}>{loading ? t('analyzer.loading') : t('analyzer.analyze')}</button>
       </form>
 
       {error && <p className="error">{error}</p>}
@@ -63,6 +65,7 @@ function lightScoreline(session, userId) {
 }
 
 function SessionCard({ session, userId, autoLoad }) {
+  const { t, lang } = useLang()
   const [matches, setMatches] = useState(null) // normalized full matches
   const [status, setStatus] = useState('idle') // idle | loading | error
   const [err, setErr] = useState('')
@@ -84,7 +87,7 @@ function SessionCard({ session, userId, autoLoad }) {
   function pick(sel) { setSelected(sel); ensureLoaded() }
 
   const d = new Date(session.startedAt)
-  const dateLabel = d.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })
+  const dateLabel = d.toLocaleDateString(lang === 'kk' ? 'kk' : 'en', { day: 'numeric', month: 'long', year: 'numeric' })
   const chips = lightScoreline(session, userId) // every map, always shown
 
   const agg = useMemo(() => {
@@ -97,7 +100,7 @@ function SessionCard({ session, userId, autoLoad }) {
     <section className="session">
       <div className="session-head">
         <h2>{dateLabel}</h2>
-        <span className="count">{session.matches.length} matches</span>
+        <span className="count">{t('analyzer.matches', { n: session.matches.length })}</span>
       </div>
 
       <div className="filters">
@@ -105,7 +108,7 @@ function SessionCard({ session, userId, autoLoad }) {
           className={`map all ${selected === 'all' ? 'active' : ''}`}
           onClick={() => pick('all')}
         >
-          all maps
+          {t('analyzer.allMaps')}
         </button>
         {chips.map((m, i) => (
           <button
@@ -118,10 +121,10 @@ function SessionCard({ session, userId, autoLoad }) {
         ))}
       </div>
 
-      {status === 'loading' && <p className="note">loading scoreboards…</p>}
+      {status === 'loading' && <p className="note">{t('analyzer.loadingBoards')}</p>}
       {status === 'error' && <p className="error">{err}</p>}
       {!matches && status === 'idle' && (
-        <p className="note">select a map (or “all maps”) to load player stats</p>
+        <p className="note">{t('analyzer.selectMap')}</p>
       )}
 
       {agg && (
@@ -132,17 +135,19 @@ function SessionCard({ session, userId, autoLoad }) {
                 <th
                   key={k}
                   className={k === 'nick' ? 'l' : ''}
-                  title={k === 'sickFrags' ? 'one-shots + no-scopes + airshots + wallbangs' : undefined}
+                  title={k === 'sickFrags' ? t('analyzer.sickTip') : undefined}
                 >
-                  {label}
+                  {k === 'nick' ? t('analyzer.player') : k === 'sickFrags' ? t('analyzer.sick') : label}
                 </th>
               ))}</tr>
             </thead>
             {agg.sides.map((side) => (
               <tbody key={side.key} className="team-group">
                 <tr className="team-row">
-                  <td className="l" colSpan={COLS.length - 1}>{side.label}</td>
-                  <td className="team-record">{side.wins}/{agg.matchCount} won</td>
+                  <td className="l" colSpan={COLS.length - 1}>
+                    {t(side.key === 'you' ? 'analyzer.yourTeam' : 'analyzer.opponents')}
+                  </td>
+                  <td className="team-record">{t('analyzer.won', { w: side.wins, n: agg.matchCount })}</td>
                 </tr>
                 {side.players.map((p) => <StatRow key={p.playerId} p={p} userId={userId} />)}
               </tbody>
@@ -155,11 +160,12 @@ function SessionCard({ session, userId, autoLoad }) {
 }
 
 const SICK_KINDS = [
-  ['one-shots', 'oneShots'], ['no-scopes', 'noScopes'],
-  ['airshots', 'airShots'], ['wallbangs', 'wallBangs'],
+  ['sick.oneShots', 'oneShots'], ['sick.noScopes', 'noScopes'],
+  ['sick.airShots', 'airShots'], ['sick.wallBangs', 'wallBangs'],
 ]
 
 function StatRow({ p, userId }) {
+  const { t } = useLang()
   const [tip, setTip] = useState(null)
 
   function showTip(e) {
@@ -190,9 +196,9 @@ function StatRow({ p, userId }) {
               {p.sickFrags}
               {tip && (
                 <span className="tip" style={{ left: tip.x, top: tip.y }}>
-                  {SICK_KINDS.map(([label, key]) => (
+                  {SICK_KINDS.map(([labelKey, key]) => (
                     <span key={key} className="tip-row">
-                      <span>{label}</span><b>{p[key]}</b>
+                      <span>{t(labelKey)}</span><b>{p[key]}</b>
                     </span>
                   ))}
                 </span>

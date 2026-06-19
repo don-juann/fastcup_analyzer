@@ -1,0 +1,169 @@
+import { createContext, useContext, useEffect, useState } from 'react'
+
+// UI strings. Stat abbreviations (K/D/A/ADR/FK/FD/CL/+/-) are universal CS
+// terms and stay as-is. Kazakh is a first-pass draft — correct freely.
+export const STRINGS = {
+  en: {
+    'nav.analyzer': 'matches',
+    'nav.duels': 'duels',
+    'nav.tierlist': 'tierlist',
+    'nav.hallOfFame': 'hall of fame',
+    'settings.darkMode': 'dark mode',
+
+    'duels.title': 'duels',
+    'duels.intro': 'head-to-head kills between players over the last ~6 months',
+    'duels.loadingMatches': 'scanning matches… {done}/{total}',
+    'duels.players': 'players',
+    'duels.empty': 'No duels found among the selected players yet.',
+    'duels.scanned': '{n} matches scanned',
+    'duels.refresh': 'rescan',
+    'hof.title': 'hall of fame',
+    'hof.empty': 'coming soon',
+    'settings.wallpaper': 'wallpaper',
+    'settings.language': 'language',
+    'settings.logout': 'log out',
+    'settings.login': 'log in',
+
+    'analyzer.intro': 'recent matches, grouped into sessions, combined into one table',
+    'analyzer.analyze': 'analyze',
+    'analyzer.loading': 'loading…',
+    'analyzer.noMatches': 'No recent matches found for this profile',
+    'analyzer.allMaps': 'all maps',
+    'analyzer.selectMap': 'select a map (or “all maps”) to load player stats',
+    'analyzer.loadingBoards': 'loading scoreboards…',
+    'analyzer.player': 'player',
+    'analyzer.sick': 'sick',
+    'analyzer.yourTeam': 'Your team',
+    'analyzer.opponents': 'Opponents',
+    'analyzer.won': '{w}/{n} won',
+    'analyzer.matches': '{n} matches',
+    'analyzer.sickTip': 'one-shots + no-scopes + airshots + wallbangs',
+    'sick.oneShots': 'one-shots',
+    'sick.noScopes': 'no-scopes',
+    'sick.airShots': 'airshots',
+    'sick.wallBangs': 'wallbangs',
+
+    'tierlist.title': 'tierlist',
+    'tierlist.manual': 'manual',
+    'tierlist.imported': 'imported',
+    'tierlist.manualHint': 'add or remove names, then drag them from S (best) to F. saved automatically.',
+    'tierlist.importedHint': 'players pulled from your recent fastcup matches (you included). drag to rank.',
+    'tierlist.addName': 'add a name…',
+    'tierlist.add': 'add',
+    'tierlist.refresh': 'refresh from fastcup',
+    'tierlist.importing': 'importing…',
+    'tierlist.loadingPeople': 'loading the people you’ve played with…',
+    'tierlist.unranked': 'unranked',
+    'tierlist.allRanked': 'everyone’s ranked 🎉',
+    'tierlist.saved': 'saved',
+    'tierlist.saving': 'saving…',
+    'tierlist.saveFailed': 'save failed',
+    'tierlist.confirmRemove': 'Remove {name} from the tierlist?',
+    'tierlist.remove': 'remove',
+    'tierlist.cancel': 'cancel',
+
+    'auth.login': 'log in',
+    'auth.register': 'register',
+    'auth.linkLabel': 'fastcup profile link',
+    'auth.nickname': 'nickname',
+    'auth.nicknamePh': "how you'll be shown",
+    'auth.password': 'password',
+    'auth.passwordPhRegister': 'at least 6 characters',
+    'auth.passwordPhLogin': '••••••••',
+    'auth.createAccount': 'create account',
+    'auth.hintLogin': 'Your fastcup link identifies you and lets us pull the players you’ve played with.',
+    'auth.hintRegister': 'Register with your fastcup link so your tierlist is filled with people you actually queue with.',
+  },
+
+  kk: {
+    'nav.analyzer': 'матчтар',
+    'nav.duels': 'дуэльдер',
+    'nav.tierlist': 'тирлист',
+    'nav.hallOfFame': 'даңқ залы',
+    'settings.darkMode': 'қараңғы режим',
+
+    'duels.title': 'дуэльдер',
+    'duels.intro': 'соңғы ~6 айдағы ойыншылар арасындағы киллдар',
+    'duels.loadingMatches': 'матчтар сканерленуде… {done}/{total}',
+    'duels.players': 'ойыншылар',
+    'duels.empty': 'Таңдалған ойыншылар арасында әзірше дуэль табылмады.',
+    'duels.scanned': '{n} матч сканерленді',
+    'duels.refresh': 'қайта сканерлеу',
+    'hof.title': 'даңқ залы',
+    'hof.empty': 'жақында',
+    'settings.wallpaper': 'тұсқағаз',
+    'settings.language': 'тіл',
+    'settings.logout': 'шығу',
+    'settings.login': 'кіру',
+
+    'analyzer.intro': 'соңғы матчтар, сессияларға топтастырылып, бір кестеге біріктірілген',
+    'analyzer.analyze': 'талдау',
+    'analyzer.loading': 'жүктелуде…',
+    'analyzer.noMatches': 'Бұл профильде соңғы матчтар табылмады',
+    'analyzer.allMaps': 'барлық карталар',
+    'analyzer.selectMap': 'ойыншы статистикасын жүктеу үшін картаны (немесе «барлық карталар») таңдаңыз',
+    'analyzer.loadingBoards': 'кесте жүктелуде…',
+    'analyzer.player': 'ойыншы',
+    'analyzer.sick': 'шебер киллдар',
+    'analyzer.yourTeam': 'Сенің командаң',
+    'analyzer.opponents': 'Қарсыластар',
+    'analyzer.won': '{w}/{n} жеңіс',
+    'analyzer.matches': '{n} матч',
+    'analyzer.sickTip': 'бір оқпен + ноускоппен + секіріп + жарды тесіп',
+    'sick.oneShots': 'бір оқпен',
+    'sick.noScopes': 'ноускоппен',
+    'sick.airShots': 'секіріп',
+    'sick.wallBangs': 'жарды тесіп',
+
+    'tierlist.title': 'тирлист',
+    'tierlist.manual': 'қолмен',
+    'tierlist.imported': 'импорт',
+    'tierlist.manualHint': 'есімдерді қосыңыз не жойыңыз, содан кейін оларды S (ең жақсы) — F-ке дейін сүйреңіз. автоматты сақталады.',
+    'tierlist.importedHint': 'ойыншылар соңғы fastcup матчтарыңнан алынды (өзіңмен қоса). рейтинг үшін сүйре.',
+    'tierlist.addName': 'есім қосу…',
+    'tierlist.add': 'қосу',
+    'tierlist.refresh': 'fastcup-тан жаңарту',
+    'tierlist.importing': 'импортталуда…',
+    'tierlist.loadingPeople': 'ойнаған адамдарың жүктелуде…',
+    'tierlist.unranked': 'лауазымсыз',
+    'tierlist.allRanked': 'бәрі бағаланды 🎉',
+    'tierlist.saved': 'сақталды',
+    'tierlist.saving': 'сақталуда…',
+    'tierlist.saveFailed': 'сақталмады',
+    'tierlist.confirmRemove': '{name} тізімнен жойылсын ба?',
+    'tierlist.remove': 'жою',
+    'tierlist.cancel': 'бас тарту',
+
+    'auth.login': 'кіру',
+    'auth.register': 'тіркелу',
+    'auth.linkLabel': 'fastcup профиль сілтемесі',
+    'auth.nickname': 'лақап ат',
+    'auth.nicknamePh': 'қалай көрсетілесің',
+    'auth.password': 'құпия сөз',
+    'auth.passwordPhRegister': 'кемінде 6 таңба',
+    'auth.passwordPhLogin': '••••••••',
+    'auth.createAccount': 'тіркелгі жасау',
+    'auth.hintLogin': 'fastcup сілтемесі сені анықтайды және ойнаған адамдарыңды жүктеуге мүмкіндік береді.',
+    'auth.hintRegister': 'fastcup сілтеме арқылы тіркел, сонда тізімің бірге ойнайтын адамдармен толады.',
+  },
+}
+
+const LangCtx = createContext(null)
+
+export function LangProvider({ children }) {
+  const [lang, setLang] = useState(() => localStorage.getItem('fc-lang') || 'en')
+  useEffect(() => {
+    localStorage.setItem('fc-lang', lang)
+    document.documentElement.lang = lang
+  }, [lang])
+
+  const t = (key, vars) => {
+    let s = STRINGS[lang]?.[key] ?? STRINGS.en[key] ?? key
+    if (vars) for (const k in vars) s = s.replaceAll(`{${k}}`, vars[k])
+    return s
+  }
+
+  return <LangCtx.Provider value={{ lang, setLang, t }}>{children}</LangCtx.Provider>
+}
+
+export const useLang = () => useContext(LangCtx)

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from './auth.jsx'
+import { useLang } from './i18n.jsx'
 
 const WALLPAPERS = ['inferno', 'anubis', 'dust2', 'extra', 'none']
 const WP_URL = {
@@ -10,6 +11,7 @@ const WP_URL = {
 
 export default function Layout() {
   const { user, logout } = useAuth()
+  const { lang, setLang, t } = useLang()
   const navigate = useNavigate()
   const [theme, setTheme] = useState(() => localStorage.getItem('fc-theme') || 'light')
   const [wallpaper, setWallpaper] = useState(() => localStorage.getItem('fc-wallpaper') || 'inferno')
@@ -43,8 +45,10 @@ export default function Layout() {
         <Link to="/" className="brand">fastcup<span className="dot">.</span></Link>
 
         <nav className="tabs">
-          <NavLink to="/" end>analyzer</NavLink>
-          <NavLink to="/tierlist">tierlist</NavLink>
+          <NavLink to="/" end>{t('nav.analyzer')}</NavLink>
+          <NavLink to="/duels">{t('nav.duels')}</NavLink>
+          <NavLink to="/tierlist">{t('nav.tierlist')}</NavLink>
+          <NavLink to="/hall-of-fame">{t('nav.hallOfFame')}</NavLink>
         </nav>
 
         <div className="topbar-right">
@@ -57,14 +61,19 @@ export default function Layout() {
 
             {open && (
               <div className="settings-menu">
-                <button className="settings-row" onClick={() => setTheme((t) => (t === 'light' ? 'dark' : 'light'))}>
-                  <span>dark mode</span>
+                <button className="settings-row" onClick={() => setTheme((tm) => (tm === 'light' ? 'dark' : 'light'))}>
+                  <span>{t('settings.darkMode')}</span>
                   <span className={`switch ${theme === 'dark' ? 'on' : ''}`}><span className="knob" /></span>
                 </button>
 
                 <button className="settings-row" onClick={cycleWallpaper}>
-                  <span>wallpaper</span>
+                  <span>{t('settings.wallpaper')}</span>
                   <span className="settings-val">{wallpaper} ›</span>
+                </button>
+
+                <button className="settings-row" onClick={() => setLang(lang === 'en' ? 'kk' : 'en')}>
+                  <span>{t('settings.language')}</span>
+                  <span className="settings-val">{lang === 'en' ? 'English ›' : 'Қазақша ›'}</span>
                 </button>
 
                 <div className="settings-divider" />
@@ -74,11 +83,11 @@ export default function Layout() {
                     className="settings-row act"
                     onClick={async () => { setOpen(false); await logout(); navigate('/') }}
                   >
-                    log out
+                    {t('settings.logout')}
                   </button>
                 ) : (
                   <Link className="settings-row act" to="/login" onClick={() => setOpen(false)}>
-                    log in
+                    {t('settings.login')}
                   </Link>
                 )}
               </div>

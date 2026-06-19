@@ -40,10 +40,10 @@ export function parseProfileId(input) {
 
 // Lightweight recent-matches list: enough to draw scorelines and group into
 // sessions without fetching every scoreboard up front.
-export async function fetchRecentMatchList(userId, limit = 16) {
+export async function fetchRecentMatchList(userId, limit = 16, { gt } = {}) {
   await ensureMaps()
   const data = await gql(QUERIES.getUserMatches, {
-    userId, gameId: GAME_ID, hasWinner: true, order: 'desc', limit,
+    userId, gameId: GAME_ID, hasWinner: true, order: 'desc', limit, gt,
   })
   return data.matchMemberships
     .filter((mm) => mm.match && mm.match.finishedAt)
@@ -118,6 +118,55 @@ export async function fetchMatchRoster(matchId) {
       return u ? { id: u.id, nick: u.nickName } : null
     })
     .filter(Boolean)
+}
+
+// Raw kill events for a match.
+export async function fetchMatchKills(matchId) {
+  const data = await gql(QUERIES.getMatchKills, { matchId })
+  return data.kills || []
+}
+
+// Run async tasks with bounded concurrency.
+async function mapPool(items, limit, fn) {
+  const out = new Array(items.length)
+  let i = 0
+  const worker = async () => {
+    while (i < items.length) { const idx = i++; out[idx] = await fn(items[idx], idx) }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker))
+  return out
+}
+
+// Scan the user's matches over the last `months` and build a duel dataset:
+//   players      id -> nick
+//   appearances  id -> # matches the player was in
+//   duels        "killerId>victimId" -> kill count (teamkills/suicides excluded)
+export async function fetchDuelData(userId, { months = 6, maxMatches = 60, onProgress } = {}) {
+  const gt = new Date(Date.now() - months * 30 * 24 * 60 * 60 * 1000).toISOString()
+  const list = await fetchRecentMatchList(userId, maxMatches, { gt })
+
+  const players = {}
+  const appearances = {}
+  const duels = {}
+  let done = 0
+
+  await mapPool(list, 6, async (m) => {
+    try {
+      const [roster, kills] = await Promise.all([fetchMatchRoster(m.id), fetchMatchKills(m.id)])
+      for (const p of roster) {
+        players[p.id] = p.nick
+        appearances[p.id] = (appearances[p.id] || 0) + 1
+      }
+      for (const k of kills) {
+        if (k.isTeamkill || !k.killerId || !k.victimId || k.killerId === k.victimId) continue
+        const key = `${k.killerId}>${k.victimId}`
+        duels[key] = (duels[key] || 0) + 1
+      }
+    } catch { /* skip a failed match */ }
+    onProgress?.(++done, list.length)
+  })
+
+  return { players, appearances, duels, matchCount: list.length }
 }
 
 // Distinct players the user has recently played with (teammates + opponents),
