@@ -141,7 +141,7 @@ async function mapPool(items, limit, fn) {
 //   players      id -> nick
 //   appearances  id -> # matches the player was in
 //   duels        "killerId>victimId" -> kill count (teamkills/suicides excluded)
-export async function fetchDuelData(userId, { months = 6, maxMatches = 60, onProgress } = {}) {
+export async function fetchDuelData(userId, { months = 5, maxMatches = 60, onProgress } = {}) {
   const gt = new Date(Date.now() - months * 30 * 24 * 60 * 60 * 1000).toISOString()
   const list = await fetchRecentMatchList(userId, maxMatches, { gt })
 
