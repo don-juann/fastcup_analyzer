@@ -2,12 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from './auth.jsx'
 import { useLang } from './i18n.jsx'
-
-const WALLPAPERS = ['inferno', 'anubis', 'dust2', 'extra', 'none']
-const WP_URL = {
-  inferno: '/bg/inferno.webp', anubis: '/bg/anubis.jpg',
-  dust2: '/bg/dust2.jpg', extra: '/bg/extra.jpg',
-}
+import { WALLPAPERS, applyTheme, applyWallpaper } from './theme.js'
 
 export default function Layout() {
   const { user, logout } = useAuth()
@@ -19,13 +14,12 @@ export default function Layout() {
   const ref = useRef(null)
 
   useEffect(() => {
-    document.documentElement.dataset.theme = theme
+    applyTheme(theme)
     localStorage.setItem('fc-theme', theme)
   }, [theme])
 
   useEffect(() => {
-    const url = WP_URL[wallpaper]
-    document.documentElement.style.setProperty('--wallpaper', url ? `url('${url}')` : 'none')
+    applyWallpaper(wallpaper)
     localStorage.setItem('fc-wallpaper', wallpaper)
   }, [wallpaper])
 
@@ -42,7 +36,7 @@ export default function Layout() {
   return (
     <div className="page">
       <header className="topbar">
-        <Link to="/" className="brand">fastcup<span className="dot">.</span></Link>
+        <Link to="/" className="brand">Bo5 by Jan<span className="dot">.</span></Link>
 
         <nav className="tabs">
           <NavLink to="/analyzer">{t('nav.analyzer')}</NavLink>

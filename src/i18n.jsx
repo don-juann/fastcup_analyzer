@@ -11,7 +11,7 @@ export const STRINGS = {
     'settings.darkMode': 'dark mode',
 
     'duels.title': 'duels',
-    'duels.intro': 'head-to-head kills between players over the last ~6 months',
+    'duels.intro': 'head-to-head kills between players',
     'duels.loadingMatches': 'scanning matches… {done}/{total}',
     'duels.players': 'players',
     'duels.empty': 'No duels found among the selected players yet.',
@@ -21,7 +21,7 @@ export const STRINGS = {
     'duels.victim': 'victim',
     'hof.title': 'hall of fame',
     'hof.empty': 'coming soon',
-    'hof.intro': 'records from your last ~6 months',
+    'hof.intro': 'records from your matches',
     'hof.scanned': '{n} matches scanned',
     'hof.refresh': 'rescan',
     'hof.loading': 'scanning matches… {done}/{total}',
@@ -84,7 +84,14 @@ export const STRINGS = {
 
     'auth.login': 'continue',
     'auth.linkLabel': 'fastcup profile link',
-    'auth.hintLogin': 'Your fastcup link identifies you and lets us pull the players you’ve played with. No password or registration needed.',
+
+    'scope.overall': 'overall',
+    'scope.session': 'session',
+    'scope.months': '{n} months',
+    'scope.pickSession': 'pick a session',
+    'scope.noSessions': 'no sessions in this range yet',
+    'scope.emptyRange': 'no matches in this range yet',
+    'scope.maps': '{n} maps',
   },
 
   kk: {
@@ -95,7 +102,7 @@ export const STRINGS = {
     'settings.darkMode': 'қараңғы режим',
 
     'duels.title': 'дуэльдер',
-    'duels.intro': 'соңғы ~6 айдағы ойыншылар арасындағы киллдар',
+    'duels.intro': 'ойыншылар арасындағы киллдар',
     'duels.loadingMatches': 'матчтар сканерленуде… {done}/{total}',
     'duels.players': 'ойыншылар',
     'duels.empty': 'Таңдалған ойыншылар арасында әзірше дуэль табылмады.',
@@ -105,7 +112,7 @@ export const STRINGS = {
     'duels.victim': 'құрбан',
     'hof.title': 'даңқ залы',
     'hof.empty': 'жақында',
-    'hof.intro': 'соңғы ~6 айдың көрсеткіштері',
+    'hof.intro': 'матчтарыңның көрсеткіштері',
     'hof.scanned': '{n} матч сканерленді',
     'hof.refresh': 'қайта сканерлеу',
     'hof.loading': 'матчтар сканерленуде… {done}/{total}',
@@ -168,7 +175,14 @@ export const STRINGS = {
 
     'auth.login': 'жалғастыру',
     'auth.linkLabel': 'fastcup профиль сілтемесі',
-    'auth.hintLogin': 'fastcup сілтемесі сені анықтайды және ойнаған адамдарыңды жүктеуге мүмкіндік береді. Құпия сөз не тіркелу қажет емес.',
+
+    'scope.overall': 'жалпы',
+    'scope.session': 'сессия',
+    'scope.months': '{n} ай',
+    'scope.pickSession': 'сессияны таңда',
+    'scope.noSessions': 'бұл аралықта сессия жоқ',
+    'scope.emptyRange': 'бұл аралықта матч жоқ',
+    'scope.maps': '{n} карта',
   },
 }
 

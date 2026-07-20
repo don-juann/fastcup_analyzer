@@ -2,67 +2,83 @@ import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../auth.jsx'
 import { useLang } from '../i18n.jsx'
-import { fetchDuelData } from '../lib/fastcup.js'
+import { scanDuelData } from '../lib/fastcup.js'
+import { useMatchScope } from '../lib/useMatchScope.js'
+import ScopePicker from '../components/ScopePicker.jsx'
 
 const short = (nick) => (nick.length > 9 ? nick.slice(0, 8) + '…' : nick)
 
-// Per-account cache so the tab loads instantly without re-hitting the API.
-const cacheKey = (uid) => `fc-duels-${uid}`
-function loadCache(uid) {
-  try { const r = localStorage.getItem(cacheKey(uid)); return r ? JSON.parse(r) : null } catch { return null }
+// Scanned duel data, keyed by scope (overall range or specific session), so
+// switching back to an already-viewed scope is instant.
+const scansKey = (uid) => `fc-duels-scans-${uid}`
+function loadScans(uid) {
+  try { const r = localStorage.getItem(scansKey(uid)); return r ? JSON.parse(r) : {} } catch { return {} }
 }
-function saveCache(uid, data) {
-  try { localStorage.setItem(cacheKey(uid), JSON.stringify({ ts: Date.now(), data })) } catch { /* quota */ }
+function saveScans(uid, map) {
+  try { localStorage.setItem(scansKey(uid), JSON.stringify(map)) } catch { /* quota */ }
 }
 
 export default function Duels() {
   const { user, ready } = useAuth()
   const { t } = useLang()
-  const [data, setData] = useState(null)
-  const [progress, setProgress] = useState({ done: 0, total: 0 })
-  const [status, setStatus] = useState('loading')
-  const [error, setError] = useState('')
-  const [selected, setSelected] = useState(() => new Set())
-  const [nonce, setNonce] = useState(0)
+  const uid = user?.fastcupId
 
-  function applyData(d) {
-    setData(d)
-    const ids = Object.keys(d.appearances).sort((a, b) => d.appearances[b] - d.appearances[a])
-    const sel = new Set(ids.slice(0, 12))
-    const selfId = String(user.fastcupId)
-    if (d.players[selfId]) sel.add(selfId)
-    setSelected(sel)
-    setStatus('ready')
-  }
+  const { status: listStatus, error: listError, sessions, scope, setScope, activeMatches, scopeKey, rescan } =
+    useMatchScope(uid, 'fc-matchlist-duels')
+
+  const [scans, setScans] = useState({})
+  const [scanStatus, setScanStatus] = useState('idle') // idle | loading | empty | error
+  const [progress, setProgress] = useState({ done: 0, total: 0 })
+  const [selected, setSelected] = useState(() => new Set())
 
   useEffect(() => {
-    if (!ready || !user) return
-    const uid = user.fastcupId
+    if (uid) setScans(loadScans(uid))
+  }, [uid])
 
-    // On a normal visit (not a manual rescan), use the cached scan if present.
-    if (nonce === 0) {
-      const cached = loadCache(uid)
-      if (cached?.data) { applyData(cached.data); return }
-    }
+  function applySelection(d) {
+    const ids = Object.keys(d.appearances).sort((a, b) => d.appearances[b] - d.appearances[a])
+    const sel = new Set(ids.slice(0, 12))
+    const selfId = String(uid)
+    if (d.players[selfId]) sel.add(selfId)
+    setSelected(sel)
+  }
+
+  // Scan the active scope's matches unless we already have them cached.
+  useEffect(() => {
+    if (!uid || listStatus !== 'ready') return
+    if (scans[scopeKey]) { applySelection(scans[scopeKey]); setScanStatus('ready'); return }
+    if (!activeMatches.length) { setScanStatus('empty'); return }
 
     let cancelled = false
-    setStatus('loading'); setError(''); setProgress({ done: 0, total: 0 })
-    fetchDuelData(uid, { onProgress: (done, total) => !cancelled && setProgress({ done, total }) })
-      .then((d) => { if (cancelled) return; saveCache(uid, d); applyData(d) })
-      .catch((e) => { if (!cancelled) { setError(e.message || String(e)); setStatus('error') } })
+    setScanStatus('loading'); setProgress({ done: 0, total: 0 })
+    scanDuelData(activeMatches, { onProgress: (done, total) => !cancelled && setProgress({ done, total }) })
+      .then((d) => {
+        if (cancelled) return
+        setScans((s) => { const next = { ...s, [scopeKey]: d }; saveScans(uid, next); return next })
+        applySelection(d)
+        setScanStatus('ready')
+      })
+      .catch(() => { if (!cancelled) setScanStatus('error') })
     return () => { cancelled = true }
-  }, [ready, user, nonce]) // eslint-disable-line
+  }, [uid, listStatus, scopeKey, activeMatches]) // eslint-disable-line
 
   function toggle(id) {
     setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
   }
 
+  function handleRescan() {
+    if (uid) { setScans({}); saveScans(uid, {}) }
+    rescan()
+  }
+
   if (ready && !user) return <Navigate to="/" replace />
 
-  const selfId = user ? String(user.fastcupId) : null
+  const data = scans[scopeKey]
+  const selfId = uid ? String(uid) : null
   const allPlayers = data ? Object.keys(data.appearances).sort((a, b) => data.appearances[b] - data.appearances[a]) : []
   const selIds = allPlayers.filter((id) => selected.has(id))
   const kills = (a, b) => data?.duels?.[`${a}>${b}`] || 0
+  const busy = listStatus === 'loading' || scanStatus === 'loading'
 
   return (
     <div className="duels">
@@ -71,7 +87,7 @@ export default function Duels() {
         {data && (
           <div className="tl-actions">
             <span className="count">{t('duels.scanned', { n: data.matchCount })}</span>
-            <button className="load-btn" onClick={() => setNonce((n) => n + 1)} disabled={status === 'loading'}>
+            <button className="load-btn" onClick={handleRescan} disabled={busy}>
               {t('duels.refresh')}
             </button>
           </div>
@@ -79,12 +95,15 @@ export default function Duels() {
       </div>
       <p className="sub">{t('duels.intro')}</p>
 
-      {status === 'loading' && (
+      <ScopePicker sessions={sessions} scope={scope} setScope={setScope} />
+
+      {listStatus === 'error' && <p className="error">{listError}</p>}
+      {scanStatus === 'loading' && (
         <p className="note">{t('duels.loadingMatches', { done: progress.done, total: progress.total || '…' })}</p>
       )}
-      {status === 'error' && <p className="error">{error}</p>}
+      {scanStatus === 'empty' && <p className="note">{t('scope.emptyRange')}</p>}
 
-      {data && status !== 'loading' && (
+      {data && scanStatus === 'ready' && (
         <>
           <div className="pool-head">{t('duels.players')}</div>
           <div className="duel-players">

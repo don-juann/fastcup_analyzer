@@ -137,20 +137,18 @@ async function mapPool(items, limit, fn) {
   return out
 }
 
-// Scan the user's matches over the last `months` and build a duel dataset:
+// Scan a given list of matches (any subset — a whole history window, or a
+// single session) and build a duel dataset:
 //   players      id -> nick
 //   appearances  id -> # matches the player was in
 //   duels        "killerId>victimId" -> kill count (teamkills/suicides excluded)
-export async function fetchDuelData(userId, { months = 6, maxMatches = 60, onProgress } = {}) {
-  const gt = new Date(Date.now() - months * 30 * 24 * 60 * 60 * 1000).toISOString()
-  const list = await fetchRecentMatchList(userId, maxMatches, { gt })
-
+export async function scanDuelData(matchList, { onProgress } = {}) {
   const players = {}
   const appearances = {}
   const duels = {}
   let done = 0
 
-  await mapPool(list, 6, async (m) => {
+  await mapPool(matchList, 6, async (m) => {
     try {
       const [roster, kills] = await Promise.all([fetchMatchRoster(m.id), fetchMatchKills(m.id)])
       for (const p of roster) {
@@ -163,20 +161,18 @@ export async function fetchDuelData(userId, { months = 6, maxMatches = 60, onPro
         duels[key] = (duels[key] || 0) + 1
       }
     } catch { /* skip a failed match */ }
-    onProgress?.(++done, list.length)
+    onProgress?.(++done, matchList.length)
   })
 
-  return { players, appearances, duels, matchCount: list.length }
+  return { players, appearances, duels, matchCount: matchList.length }
 }
 
-// Scan the user's last `months` and compute Hall-of-Fame records:
+// Scan a given list of matches (any subset — a whole history window, or a
+// single session) and compute Hall-of-Fame records:
 //   players  id -> season totals (kills/deaths/assists/clutches/sick/fk/dmg/rounds/matches)
 //   weapons  weaponId -> total kill count    weaponNames weaponId -> name (from highlights)
 //   best     single-match record holders (matchKills, matchDeaths, …)
-export async function fetchHallOfFameData(userId, { months = 5, maxMatches = 80, onProgress } = {}) {
-  const gt = new Date(Date.now() - months * 30 * 24 * 60 * 60 * 1000).toISOString()
-  const list = await fetchRecentMatchList(userId, maxMatches, { gt })
-
+export async function scanHallOfFameData(matchList, { onProgress } = {}) {
   const players = {}
   const weapons = {}
   const weaponNames = {}
@@ -188,7 +184,7 @@ export async function fetchHallOfFameData(userId, { months = 5, maxMatches = 80,
   }
   let done = 0
 
-  await mapPool(list, 6, async (m) => {
+  await mapPool(matchList, 6, async (m) => {
     try {
       const [detail, kData, dData, cData] = await Promise.all([
         gql(QUERIES.getMatch, { matchId: m.id, gameId: GAME_ID }),
@@ -236,10 +232,10 @@ export async function fetchHallOfFameData(userId, { months = 5, maxMatches = 80,
         }
       }
     } catch { /* skip failed match */ }
-    onProgress?.(++done, list.length)
+    onProgress?.(++done, matchList.length)
   })
 
-  return { players, weapons, weaponNames, best, matchCount: list.length }
+  return { players, weapons, weaponNames, best, matchCount: matchList.length }
 }
 
 // Distinct players the user has recently played with (teammates + opponents),

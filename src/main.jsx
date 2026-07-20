@@ -9,7 +9,10 @@ import Identify from './pages/Identify.jsx'
 import Tierlist from './pages/Tierlist.jsx'
 import Duels from './pages/Duels.jsx'
 import HallOfFame from './pages/HallOfFame.jsx'
+import { initTheme } from './theme.js'
 import './styles.css'
+
+initTheme()
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -17,8 +20,8 @@ createRoot(document.getElementById('root')).render(
       <LangProvider>
       <AuthProvider>
         <Routes>
+          <Route path="/" element={<Identify />} />
           <Route element={<Layout />}>
-            <Route path="/" element={<Identify />} />
             <Route path="/analyzer" element={<Analyzer />} />
             <Route path="/duels" element={<Duels />} />
             <Route path="/tierlist" element={<Tierlist />} />

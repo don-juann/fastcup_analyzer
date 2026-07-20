@@ -102,3 +102,15 @@ export function aggregateSession(session, userId) {
 
   return { sides, scoreline, matchCount: session.matches.length }
 }
+
+// Cheap per-session record (map count + W/L) from lightweight match-list
+// entries — each match just needs .teams[].isWinner and .myTeamId, no full
+// per-player detail required. Used for session-picker summaries.
+export function summarizeSession(session) {
+  let wins = 0
+  for (const m of session.matches) {
+    const mine = m.teams.find((t) => t.id === m.myTeamId)
+    if (mine?.isWinner) wins++
+  }
+  return { mapCount: session.matches.length, wins, losses: session.matches.length - wins }
+}
