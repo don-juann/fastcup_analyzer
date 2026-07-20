@@ -45,7 +45,7 @@ export default function Layout() {
         <Link to="/" className="brand">fastcup<span className="dot">.</span></Link>
 
         <nav className="tabs">
-          <NavLink to="/" end>{t('nav.analyzer')}</NavLink>
+          <NavLink to="/analyzer">{t('nav.analyzer')}</NavLink>
           <NavLink to="/duels">{t('nav.duels')}</NavLink>
           <NavLink to="/tierlist">{t('nav.tierlist')}</NavLink>
           <NavLink to="/hall-of-fame">{t('nav.hallOfFame')}</NavLink>
@@ -86,7 +86,7 @@ export default function Layout() {
                     {t('settings.logout')}
                   </button>
                 ) : (
-                  <Link className="settings-row act" to="/login" onClick={() => setOpen(false)}>
+                  <Link className="settings-row act" to="/" onClick={() => setOpen(false)}>
                     {t('settings.login')}
                   </Link>
                 )}

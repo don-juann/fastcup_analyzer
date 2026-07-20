@@ -6,7 +6,6 @@ import express from 'express'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
-import register from '../api/auth/register.js'
 import login from '../api/auth/login.js'
 import logout from '../api/auth/logout.js'
 import me from '../api/auth/me.js'
@@ -19,7 +18,6 @@ app.use(express.json({ limit: '2mb' }))
 const PORT = process.env.PORT || 8787
 
 // Mount the serverless handlers (they use req/res in a Vercel-compatible way).
-app.post('/api/auth/register', register)
 app.post('/api/auth/login', login)
 app.post('/api/auth/logout', logout)
 app.get('/api/auth/me', me)

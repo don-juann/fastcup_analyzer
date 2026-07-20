@@ -13,7 +13,6 @@ async function req(path, { method = 'GET', body } = {}) {
 
 export const api = {
   me: () => req('/api/auth/me'),
-  register: (body) => req('/api/auth/register', { method: 'POST', body }),
   login: (body) => req('/api/auth/login', { method: 'POST', body }),
   logout: () => req('/api/auth/logout', { method: 'POST' }),
   getTierlist: () => req('/api/tierlist'),

@@ -1,15 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Navigate } from 'react-router-dom'
 import { groupIntoSessions, aggregateSession } from '../lib/sessions.js'
 import { parseProfileId, fetchRecentMatchList, loadSessionMatches } from '../lib/fastcup.js'
+import { useAuth } from '../auth.jsx'
 import { useLang } from '../i18n.jsx'
 
 export default function Analyzer() {
+  const { user, ready } = useAuth()
   const { t } = useLang()
   const [link, setLink] = useState('https://cs2.fastcup.net/id685178')
   const [userId, setUserId] = useState(null)
   const [sessions, setSessions] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  if (ready && !user) return <Navigate to="/" replace />
 
   async function onSubmit(e) {
     e.preventDefault()

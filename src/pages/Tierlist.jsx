@@ -153,7 +153,7 @@ export default function Tierlist() {
     })
   }
 
-  if (ready && !user) return <Navigate to="/login" replace />
+  if (ready && !user) return <Navigate to="/" replace />
 
   const manual = mode === 'manual'
 

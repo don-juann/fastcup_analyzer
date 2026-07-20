@@ -14,7 +14,6 @@ export function AuthProvider({ children }) {
   const value = {
     user,
     ready,
-    async register(body) { const r = await api.register(body); setUser(r.user); return r.user },
     async login(body) { const r = await api.login(body); setUser(r.user); return r.user },
     async logout() { await api.logout().catch(() => {}); setUser(null) },
   }

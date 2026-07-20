@@ -47,7 +47,7 @@ export default function HallOfFame() {
     return () => { cancelled = true }
   }, [ready, user, nonce]) // eslint-disable-line
 
-  if (ready && !user) return <Navigate to="/login" replace />
+  if (ready && !user) return <Navigate to="/" replace />
 
   const cards = data ? buildCards(data, t) : []
 

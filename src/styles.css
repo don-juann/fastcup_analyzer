@@ -472,14 +472,6 @@ body::after {
   padding: 24px;
   box-shadow: var(--shadow);
 }
-.auth-tabs { display: flex; gap: 6px; margin-bottom: 18px; }
-.auth-tabs button {
-  flex: 1; padding: 9px;
-  border: 1px solid var(--line); border-radius: 10px;
-  background: transparent; color: var(--muted);
-  font: inherit; font-size: 14px; font-weight: 500; cursor: pointer;
-}
-.auth-tabs button.active { border-color: var(--accent); color: var(--ink); }
 .auth-form { display: flex; flex-direction: column; gap: 14px; }
 .auth-form label { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--muted); }
 .auth-form input {

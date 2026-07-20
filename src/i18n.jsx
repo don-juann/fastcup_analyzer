@@ -82,17 +82,9 @@ export const STRINGS = {
     'tierlist.remove': 'remove',
     'tierlist.cancel': 'cancel',
 
-    'auth.login': 'log in',
-    'auth.register': 'register',
+    'auth.login': 'continue',
     'auth.linkLabel': 'fastcup profile link',
-    'auth.nickname': 'nickname',
-    'auth.nicknamePh': "how you'll be shown",
-    'auth.password': 'password',
-    'auth.passwordPhRegister': 'at least 6 characters',
-    'auth.passwordPhLogin': '••••••••',
-    'auth.createAccount': 'create account',
-    'auth.hintLogin': 'Your fastcup link identifies you and lets us pull the players you’ve played with.',
-    'auth.hintRegister': 'Register with your fastcup link so your tierlist is filled with people you actually queue with.',
+    'auth.hintLogin': 'Your fastcup link identifies you and lets us pull the players you’ve played with. No password or registration needed.',
   },
 
   kk: {
@@ -174,17 +166,9 @@ export const STRINGS = {
     'tierlist.remove': 'жою',
     'tierlist.cancel': 'бас тарту',
 
-    'auth.login': 'кіру',
-    'auth.register': 'тіркелу',
+    'auth.login': 'жалғастыру',
     'auth.linkLabel': 'fastcup профиль сілтемесі',
-    'auth.nickname': 'лақап ат',
-    'auth.nicknamePh': 'қалай көрсетілесің',
-    'auth.password': 'құпия сөз',
-    'auth.passwordPhRegister': 'кемінде 6 таңба',
-    'auth.passwordPhLogin': '••••••••',
-    'auth.createAccount': 'тіркелгі жасау',
-    'auth.hintLogin': 'fastcup сілтемесі сені анықтайды және ойнаған адамдарыңды жүктеуге мүмкіндік береді.',
-    'auth.hintRegister': 'fastcup сілтеме арқылы тіркел, сонда тізімің бірге ойнайтын адамдармен толады.',
+    'auth.hintLogin': 'fastcup сілтемесі сені анықтайды және ойнаған адамдарыңды жүктеуге мүмкіндік береді. Құпия сөз не тіркелу қажет емес.',
   },
 }
 

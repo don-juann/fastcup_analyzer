@@ -5,7 +5,7 @@ import { AuthProvider } from './auth.jsx'
 import { LangProvider } from './i18n.jsx'
 import Layout from './Layout.jsx'
 import Analyzer from './pages/Analyzer.jsx'
-import Auth from './pages/Auth.jsx'
+import Identify from './pages/Identify.jsx'
 import Tierlist from './pages/Tierlist.jsx'
 import Duels from './pages/Duels.jsx'
 import HallOfFame from './pages/HallOfFame.jsx'
@@ -18,8 +18,8 @@ createRoot(document.getElementById('root')).render(
       <AuthProvider>
         <Routes>
           <Route element={<Layout />}>
-            <Route path="/" element={<Analyzer />} />
-            <Route path="/login" element={<Auth />} />
+            <Route path="/" element={<Identify />} />
+            <Route path="/analyzer" element={<Analyzer />} />
             <Route path="/duels" element={<Duels />} />
             <Route path="/tierlist" element={<Tierlist />} />
             <Route path="/hall-of-fame" element={<HallOfFame />} />

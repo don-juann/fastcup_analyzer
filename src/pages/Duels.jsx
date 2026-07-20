@@ -57,7 +57,7 @@ export default function Duels() {
     setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
   }
 
-  if (ready && !user) return <Navigate to="/login" replace />
+  if (ready && !user) return <Navigate to="/" replace />
 
   const selfId = user ? String(user.fastcupId) : null
   const allPlayers = data ? Object.keys(data.appearances).sort((a, b) => data.appearances[b] - data.appearances[a]) : []
