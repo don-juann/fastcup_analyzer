@@ -1,6 +1,6 @@
 import { useLang } from '../i18n.jsx'
 import { summarizeSession } from '../lib/sessions.js'
-import { MONTHS_OPTIONS } from '../lib/useMatchScope.js'
+import { MONTHS_OPTIONS, DEFAULT_MONTHS } from '../lib/useMatchScope.js'
 
 // Overall (last N months) vs. one specific session, with a small per-session
 // summary chip (date, map count, win/loss record). Shared by Duels + Hall of Fame.
@@ -13,7 +13,7 @@ export default function ScopePicker({ sessions, scope, setScope }) {
       <div className="mode-toggle">
         <button
           className={!isSession ? 'active' : ''}
-          onClick={() => setScope({ type: 'overall', months: 6 })}
+          onClick={() => setScope({ type: 'overall', months: DEFAULT_MONTHS })}
         >
           {t('scope.overall')}
         </button>

@@ -6,8 +6,9 @@ import { fetchRecentMatchList } from './fastcup.js'
 import { groupIntoSessions } from './sessions.js'
 
 export const MONTHS_OPTIONS = [3, 6]
+export const DEFAULT_MONTHS = 3
 const MAX_MATCHES = 150
-const MAX_MONTHS = 6
+const MAX_MONTHS = 6 // raw fetch window — covers both the 3- and 6-month views without refetching
 
 function loadCache(key) {
   try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : null } catch { return null }
@@ -26,7 +27,7 @@ export function useMatchScope(uid, cacheName) {
   const [status, setStatus] = useState('loading') // loading | ready | error
   const [error, setError] = useState('')
   const [nonce, setNonce] = useState(0)
-  const [scope, setScope] = useState({ type: 'overall', months: MAX_MONTHS })
+  const [scope, setScope] = useState({ type: 'overall', months: DEFAULT_MONTHS })
 
   useEffect(() => {
     if (!uid) return

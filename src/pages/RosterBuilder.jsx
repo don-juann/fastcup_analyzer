@@ -41,7 +41,7 @@ export default function RosterBuilder() {
   const { t } = useLang()
   const uid = user?.fastcupId
 
-  const [months, setMonths] = useState(6)
+  const [months, setMonths] = useState(3)
   const [pool, setPool] = useState({})
   const [status, setStatus] = useState('loading') // loading | ready | error
   const [progress, setProgress] = useState({ done: 0, total: 0 })
@@ -187,29 +187,28 @@ export default function RosterBuilder() {
 
   return (
     <div className="roster">
-      <div className="tl-head">
-        <h1>{t('roster.title')}<span className="dot">.</span></h1>
-        <div className="roster-head-controls">
-          <form className="add-row roster-add-row" onSubmit={addPlayer}>
-            <input
-              value={addLink}
-              onChange={(e) => setAddLink(e.target.value)}
-              placeholder="https://cs2.fastcup.net/idXXXXXX"
-              spellCheck={false}
-              disabled={adding}
-            />
-            <button type="submit" disabled={adding}>{adding ? '…' : t('roster.addPlayer')}</button>
-          </form>
-          <div className="mode-toggle scope-months">
-            {MONTHS_OPTIONS.map((n) => (
-              <button key={n} className={months === n ? 'active' : ''} onClick={() => setMonths(n)}>
-                {t('scope.months', { n })}
-              </button>
-            ))}
-          </div>
+      <h1>{t('roster.title')}<span className="dot">.</span></h1>
+      <p className="sub">{t('roster.intro')}</p>
+
+      <div className="roster-controls-row">
+        <form className="add-row roster-add-row" onSubmit={addPlayer}>
+          <input
+            value={addLink}
+            onChange={(e) => setAddLink(e.target.value)}
+            placeholder="https://cs2.fastcup.net/idXXXXXX"
+            spellCheck={false}
+            disabled={adding}
+          />
+          <button type="submit" disabled={adding}>{adding ? '…' : t('roster.addPlayer')}</button>
+        </form>
+        <div className="mode-toggle scope-months">
+          {MONTHS_OPTIONS.map((n) => (
+            <button key={n} className={months === n ? 'active' : ''} onClick={() => setMonths(n)}>
+              {t('scope.months', { n })}
+            </button>
+          ))}
         </div>
       </div>
-      <p className="sub">{t('roster.intro')}</p>
       {addError && <p className="error">{addError}</p>}
 
       {status === 'loading' && (
@@ -226,31 +225,36 @@ export default function RosterBuilder() {
         >
           <ShieldClipDef />
 
-          <TeamZone id="teamA" label={t('roster.teamA')} ids={teamA} pool={pool} t={t} />
+          <div className="roster-workspace">
+            <div className="roster-build">
+              <TeamZone id="teamA" label={t('roster.teamA')} ids={teamA} pool={pool} t={t} />
 
-          <div className="roster-compare">
-            <div className="roster-total">
-              <span className="roster-total-label">{t('roster.teamA')}</span>
-              <span className="roster-total-score">{avgA || '—'}</span>
+              <div className="roster-compare">
+                <div className="roster-total">
+                  <span className="roster-total-label">{t('roster.teamA')}</span>
+                  <span className="roster-total-score">{avgA || '—'}</span>
+                </div>
+                <button className="load-btn" onClick={autoBalance} disabled={!canBalance}>
+                  {t('roster.autoBalance')}
+                </button>
+                <div className="roster-total">
+                  <span className="roster-total-label">{t('roster.teamB')}</span>
+                  <span className="roster-total-score">{avgB || '—'}</span>
+                </div>
+              </div>
+
+              <TeamZone id="teamB" label={t('roster.teamB')} ids={teamB} pool={pool} t={t} />
             </div>
-            <button className="load-btn" onClick={autoBalance} disabled={!canBalance}>
-              {t('roster.autoBalance')}
-            </button>
-            <div className="roster-total">
-              <span className="roster-total-label">{t('roster.teamB')}</span>
-              <span className="roster-total-score">{avgB || '—'}</span>
+
+            <div className="roster-sidebar">
+              <div className="pool-head">{t('roster.pool')}</div>
+              <Dropzone id="pool" className="pool roster-pool">
+                {poolIds.length
+                  ? poolIds.map((id) => <RosterCard key={id} id={id} p={pool[id]} t={t} />)
+                  : <span className="pool-empty">{t('roster.poolEmpty')}</span>}
+              </Dropzone>
             </div>
           </div>
-
-          <TeamZone id="teamB" label={t('roster.teamB')} ids={teamB} pool={pool} t={t} />
-
-          <div className="pool-head">{t('roster.pool')}</div>
-
-          <Dropzone id="pool" className="pool roster-pool">
-            {poolIds.length
-              ? poolIds.map((id) => <RosterCard key={id} id={id} p={pool[id]} t={t} />)
-              : <span className="pool-empty">{t('roster.poolEmpty')}</span>}
-          </Dropzone>
 
           <DragOverlay>{activeId ? <RosterCard id={activeId} p={pool[activeId]} t={t} overlay /> : null}</DragOverlay>
         </DndContext>
@@ -260,11 +264,13 @@ export default function RosterBuilder() {
 }
 
 function TeamZone({ id, label, ids, pool, t }) {
+  // Highest rating on the left, descending to the right.
+  const sorted = [...ids].sort((a, b) => (pool[b]?.rating.score || 0) - (pool[a]?.rating.score || 0))
   return (
     <div className="roster-team">
       <div className="roster-team-head">{label} <span className="count">{ids.length}/{TEAM_SIZE}</span></div>
       <Dropzone id={id} className="roster-team-drop">
-        {ids.map((pid) => <RosterCard key={pid} id={pid} p={pool[pid]} t={t} />)}
+        {sorted.map((pid) => <RosterCard key={pid} id={pid} p={pool[pid]} t={t} />)}
         {Array.from({ length: TEAM_SIZE - ids.length }).map((_, i) => (
           <div key={`empty-${i}`} className="fifa-frame fifa-slot-empty" />
         ))}
@@ -285,7 +291,7 @@ function ShieldClipDef() {
     <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
       <defs>
         <clipPath id="fifa-shield-clip" clipPathUnits="objectBoundingBox">
-          <path d="M0.06,0.13 C0.06,0.05 0.13,0.02 0.20,0.02 L0.40,0.02 C0.44,0.02 0.47,0.05 0.50,0.07 C0.53,0.05 0.56,0.02 0.60,0.02 L0.80,0.02 C0.87,0.02 0.94,0.05 0.94,0.13 L0.94,0.80 C0.94,0.87 0.91,0.92 0.85,0.95 C0.74,1.0 0.62,1.0 0.50,1.0 C0.38,1.0 0.26,1.0 0.15,0.95 C0.09,0.92 0.06,0.87 0.06,0.80 Z" />
+          <path d="M0.06,0.13 C0.06,0.05 0.13,0.02 0.20,0.02 L0.40,0.02 C0.44,0.02 0.47,0.05 0.50,0.07 C0.53,0.05 0.56,0.02 0.60,0.02 L0.80,0.02 C0.87,0.02 0.94,0.05 0.94,0.13 L0.94,0.88 C0.94,0.93 0.91,0.96 0.85,0.98 C0.74,1.0 0.62,1.0 0.50,1.0 C0.38,1.0 0.26,1.0 0.15,0.98 C0.09,0.96 0.06,0.93 0.06,0.88 Z" />
         </clipPath>
       </defs>
     </svg>
@@ -325,14 +331,13 @@ function RosterCard({ id, p, t, overlay }) {
       title={breakdown}
     >
       <div className="fifa-card">
-        <div className="fifa-photo-wrap">
+        <div className="fifa-photo-wrap" title={p.nick}>
           {p.avatar
             ? <img className="fifa-avatar" src={p.avatar} alt="" />
             : <span className="fifa-avatar fifa-avatar-fallback">{initials}</span>}
           <span className="fifa-score-badge">{r.score}</span>
         </div>
         <span className="fifa-role">{t(`roster.role.${r.role}`)}</span>
-        <div className="fifa-name" title={p.nick}>{p.nick}</div>
         <div className="fifa-divider" />
         <div className="fifa-stats">
           {stats.map(([label, val]) => (

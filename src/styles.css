@@ -784,8 +784,29 @@ body::after {
 .btn-danger:hover { filter: brightness(1.06); }
 
 /* Roster builder */
-.roster-head-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.roster-add-row { margin: 0; max-width: 260px; }
+.roster-controls-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 14px 0 4px; }
+.roster-add-row { margin: 0; max-width: 320px; flex: 1 1 240px; }
+
+/* Two-part workspace: team-building on one side, the player pool on the
+   other, in a single container. On desktop it breaks out to the full
+   viewport width (independent of the site's normal 960px column) so both
+   sides have real room; below that it just stacks like everything else. */
+.roster-workspace { display: flex; flex-direction: column; gap: 18px; }
+.roster-build { min-width: 0; }
+
+@media (min-width: 900px) {
+  .roster-workspace {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    align-items: start;
+    gap: 28px;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    padding: 0 24px;
+    box-sizing: border-box;
+  }
+  .roster-sidebar { max-height: 700px; overflow-y: auto; padding-right: 4px; }
+}
 
 .roster-compare {
   display: flex; align-items: center; justify-content: center; gap: 22px;
@@ -807,25 +828,25 @@ body::after {
    across the compare bar — never wraps, scrolls sideways if it must. */
 .roster-team-drop {
   display: flex; flex-direction: row; flex-wrap: nowrap; justify-content: center;
-  gap: 12px; min-height: 268px; padding: 8px 4px;
+  gap: 8px; min-height: 190px; padding: 8px 4px;
   border: 1px dashed var(--line); border-radius: var(--radius);
   overflow-x: auto;
   transition: background 0.12s;
 }
 .roster-team-drop.over { background: color-mix(in srgb, var(--accent) 14%, transparent); }
 
-.roster-pool { display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-start; min-height: 64px; }
+.roster-pool { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; min-height: 64px; }
 
 /* Shield card: an original silhouette (clip-path defined once per page via
    ShieldClipDef), tinted by score tier — gold 85-100, silver 70-84, bronze
    50-69. Not a trace of any specific trading-card brand's artwork/textures.
-   The shield only tapers in its bottom ~20% (see the clip path itself), so
-   content padding stays inside the ~80%-height "safe" rectangle above that
+   The shield only tapers in its bottom ~12% (see the clip path itself), so
+   content padding stays inside the ~88%-height "safe" rectangle above that
    and never gets clipped by the point. */
 .fifa-frame {
   flex: 0 0 auto;
-  width: clamp(128px, 18vw, 190px);
-  height: clamp(180px, 25.2vw, 266px);
+  width: clamp(96px, 12.5vw, 142px);
+  height: clamp(122px, 16.5vw, 178px);
   clip-path: url(#fifa-shield-clip);
   cursor: grab; user-select: none; touch-action: none;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
@@ -841,7 +862,7 @@ body::after {
 .fifa-card {
   position: relative;
   width: 100%; height: 100%;
-  padding: 8% 8% 32%;
+  padding: 7% 8% 18%;
   display: flex; flex-direction: column; align-items: center;
   clip-path: url(#fifa-shield-clip);
 }
@@ -857,37 +878,32 @@ body::after {
 
 /* Photo fills most of the card; the score badge sits right on top of it,
    straddling its bottom edge, FIFA-style. */
-.fifa-photo-wrap { position: relative; z-index: 1; margin-top: 2%; }
+.fifa-photo-wrap { position: relative; z-index: 1; }
 .fifa-avatar {
   display: block;
-  width: clamp(58px, 13vw, 88px); height: clamp(58px, 13vw, 88px);
+  width: clamp(42px, 9vw, 60px); height: clamp(42px, 9vw, 60px);
   border-radius: 50%; object-fit: cover; border: 2px solid rgba(255, 255, 255, 0.6);
 }
-.fifa-avatar-fallback { display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.3); font-weight: 700; font-size: clamp(16px, 3.6vw, 24px); }
+.fifa-avatar-fallback { display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.3); font-weight: 700; font-size: clamp(13px, 2.8vw, 18px); }
 .fifa-score-badge {
   position: absolute; left: 50%; bottom: -10%; transform: translateX(-50%);
-  min-width: 30%; padding: 2px 9px;
+  min-width: 30%; padding: 1px 7px;
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.62);
   border: 1px solid rgba(255, 255, 255, 0.55);
   color: #fff; font-family: var(--font-display); font-weight: 800;
-  font-size: clamp(13px, 2.6vw, 18px); text-align: center; line-height: 1.5;
+  font-size: clamp(10.5px, 2.1vw, 14px); text-align: center; line-height: 1.5;
 }
 
 .fifa-role {
-  margin-top: 6%; z-index: 1;
-  font-size: clamp(8px, 1.7vw, 10px); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  margin-top: 5%; z-index: 1;
+  font-size: clamp(6.5px, 1.4vw, 8.5px); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
 }
-.fifa-name {
-  margin-top: 3px; z-index: 1; max-width: 100%;
-  font-size: clamp(9.5px, 2vw, 13px); font-weight: 800; text-transform: uppercase; letter-spacing: 0.01em;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.fifa-divider { width: 70%; height: 1px; background: currentColor; opacity: 0.35; margin: 3% 0 3%; z-index: 1; }
+.fifa-divider { width: 70%; height: 1px; background: currentColor; opacity: 0.35; margin: 3% 0; z-index: 1; }
 
-.fifa-stats { z-index: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 3px 12px; width: 100%; }
-.fifa-stat { display: flex; align-items: center; justify-content: center; gap: 4px; font-size: clamp(8.5px, 1.8vw, 11.5px); font-weight: 700; }
-.fifa-stat-val { font-family: var(--font-mono); min-width: 16px; text-align: right; }
+.fifa-stats { z-index: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; width: 100%; }
+.fifa-stat { display: flex; align-items: center; justify-content: center; gap: 3px; font-size: clamp(7px, 1.4vw, 9.5px); font-weight: 700; }
+.fifa-stat-val { font-family: var(--font-mono); min-width: 13px; text-align: right; }
 .fifa-stat-label { opacity: 0.75; letter-spacing: 0.01em; }
 
 /* ---- Mobile ---- */
