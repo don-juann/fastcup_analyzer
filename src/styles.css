@@ -478,8 +478,18 @@ body::after {
   gap: 36px;
 }
 .identify-left { display: flex; flex-direction: column; align-items: flex-start; }
+.identify-title {
+  margin: 0;
+  max-width: 480px;
+  font-family: var(--font-display);
+  font-size: 42px; font-weight: 800;
+  line-height: 1.08; letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+.identify-title .dot { color: var(--accent); }
+.identify-sub { margin: 14px 0 0; max-width: 420px; color: var(--muted); font-size: 15px; line-height: 1.6; }
 
-.identify-form { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 14px; }
+.identify-form { margin-top: 28px; width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 14px; }
 .identify-form label { display: flex; flex-direction: column; gap: 7px; font-size: 12px; color: var(--muted); }
 .identify-form input {
   padding: 13px 15px;
@@ -504,6 +514,38 @@ body::after {
 .identify-submit:hover { background: var(--accent-active); }
 .identify-submit:active { transform: translateY(1px); }
 .identify-submit:disabled { opacity: 0.6; cursor: default; }
+
+.identify-divider {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; max-width: 380px;
+  margin: 20px 0 0;
+  color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em;
+}
+.identify-divider::before, .identify-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--line);
+}
+
+.identify-quick {
+  margin-top: 20px; width: 100%; max-width: 380px;
+  display: flex; flex-direction: column; gap: 7px;
+  font-size: 12px; color: var(--muted);
+}
+.identify-quick select {
+  padding: 13px 15px;
+  border: 1px solid var(--line); border-radius: 12px;
+  background: var(--card); backdrop-filter: blur(8px);
+  color: var(--ink); font: inherit; font-size: 14.5px; outline: none;
+  cursor: pointer; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23848e9c' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.identify-quick select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.identify-quick select:disabled { opacity: 0.6; cursor: default; }
 
 .identify-right {
   position: relative;
@@ -765,7 +807,10 @@ html, body { max-width: 100%; overflow-x: hidden; }
   .identify-page { padding: 24px 16px; }
   .identify { grid-template-columns: 1fr; gap: 28px; }
   .identify-left { align-items: center; text-align: center; }
+  .identify-title { font-size: 30px; max-width: none; }
+  .identify-sub { max-width: none; }
   .identify-form { max-width: none; }
+  .identify-divider, .identify-quick { max-width: none; }
   .identify-form label { text-align: left; }
   .identify-form, .identify-submit { align-self: center; }
   .identify-right { max-width: 320px; }

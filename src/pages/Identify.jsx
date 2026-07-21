@@ -17,6 +17,23 @@ async function resolveNickname(fastcupId) {
   }
 }
 
+// Known regulars — a shortcut so they don't have to paste their own link.
+const QUICK_PLAYERS = [
+  { id: 685178, nick: 'giovana' },
+  { id: 517604, nick: 'a1byn' },
+  { id: 1263855, nick: 'shadyman' },
+  { id: 1373933, nick: 'hangoover' },
+  { id: 2815776, nick: 'hellaguap' },
+  { id: 517635, nick: 'AL1ZH' },
+  { id: 4110295, nick: 'arkhatiko' },
+  { id: 270361, nick: 'AD1X_X' },
+  { id: 927918, nick: 'Gunch1k' },
+  { id: 268116, nick: 'bmw M3cs' },
+  { id: 268145, nick: 'VANDAMM' },
+  { id: 1598268, nick: 'w0ndEr1y' },
+  { id: 3306523, nick: 'ACEtac' },
+]
+
 export default function Identify() {
   const { user, ready, login } = useAuth()
   const { t } = useLang()
@@ -42,10 +59,29 @@ export default function Identify() {
     }
   }
 
+  async function onQuickPick(e) {
+    const id = Number(e.target.value)
+    e.target.value = ''
+    if (!id) return
+    const player = QUICK_PLAYERS.find((p) => p.id === id)
+    setError(''); setBusy(true)
+    try {
+      await login({ fastcupId: id, nickname: player?.nick })
+      navigate('/analyzer')
+    } catch (err) {
+      setError(err.message || String(err))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <div className="identify-page">
       <div className="identify">
         <div className="identify-left">
+          <h1 className="identify-title">{t('auth.heading')}<span className="dot">.</span></h1>
+          <p className="identify-sub">{t('auth.description')}</p>
+
           <form className="identify-form" onSubmit={onSubmit}>
             <label>
               <span>{t('auth.linkLabel')}</span>
@@ -65,6 +101,18 @@ export default function Identify() {
               <ArrowIcon />
             </button>
           </form>
+
+          <div className="identify-divider"><span>{t('auth.or')}</span></div>
+
+          <label className="identify-quick">
+            <span>{t('auth.quickLabel')}</span>
+            <select defaultValue="" onChange={onQuickPick} disabled={busy}>
+              <option value="" disabled>{t('auth.quickPlaceholder')}</option>
+              {QUICK_PLAYERS.map((p) => (
+                <option key={p.id} value={p.id}>{p.nick}</option>
+              ))}
+            </select>
+          </label>
         </div>
 
         <div className="identify-right">

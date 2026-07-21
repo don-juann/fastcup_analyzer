@@ -83,7 +83,12 @@ export const STRINGS = {
     'tierlist.cancel': 'cancel',
 
     'auth.login': 'continue',
+    'auth.heading': 'enter your fastcup link',
+    'auth.description': 'Track your CS2 matches, duels, tierlists, and hall-of-fame records — all pulled straight from your fastcup profile.',
     'auth.linkLabel': 'fastcup profile link',
+    'auth.or': 'or',
+    'auth.quickLabel': 'choose your profile',
+    'auth.quickPlaceholder': 'select a player…',
 
     'scope.overall': 'overall',
     'scope.session': 'session',
@@ -174,7 +179,12 @@ export const STRINGS = {
     'tierlist.cancel': 'бас тарту',
 
     'auth.login': 'жалғастыру',
+    'auth.heading': 'fastcup сілтемеңді енгіз',
+    'auth.description': 'CS2 матчтарыңды, дуэльдерді, тирлисттер мен даңқ залы жазбаларын — тікелей fastcup профилің арқылы бақыла.',
     'auth.linkLabel': 'fastcup профиль сілтемесі',
+    'auth.or': 'немесе',
+    'auth.quickLabel': 'профиліңді таңда',
+    'auth.quickPlaceholder': 'ойыншыны таңда…',
 
     'scope.overall': 'жалпы',
     'scope.session': 'сессия',

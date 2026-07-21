@@ -55,7 +55,7 @@ export default function ScopePicker({ sessions, scope, setScope }) {
                   className={`map ${resultClass} ${scope.id === s.id ? 'active' : ''}`}
                   onClick={() => setScope({ type: 'session', id: s.id })}
                 >
-                  {label} <b>{t('scope.maps', { n: sum.mapCount })} · {sum.wins}-{sum.losses}</b>
+                  {label} · <b>{t('scope.maps', { n: sum.mapCount })} · {sum.wins}-{sum.losses}</b>
                 </button>
               )
             })}
