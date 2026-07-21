@@ -31,6 +31,10 @@ async function gql(query, variables) {
 
 const ms = (iso) => new Date(iso).getTime()
 
+// The API returns just a bare filename (e.g. "1373933_888nf422a.webp") — the
+// real site serves these from fastcup's own avatar CDN.
+const avatarUrl = (filename) => (filename ? `https://cdn.fastcup.net/avatars/users/${filename}` : null)
+
 // "https://cs2.fastcup.net/id685178" | "id685178" | "685178" -> 685178
 export function parseProfileId(input) {
   const m = String(input).trim().match(/(?:id)?(\d+)\D*$/)
@@ -196,7 +200,7 @@ export async function scanHallOfFameData(matchList, { onProgress } = {}) {
       if (!match) return
       const kills = kData.kills || []
       const roster = (match.members || [])
-        .map((mem) => { const u = mem.private?.user; return u ? { userId: u.id, nick: u.nickName, teamId: mem.matchTeamId, avatar: u.avatar } : null })
+        .map((mem) => { const u = mem.private?.user; return u ? { userId: u.id, nick: u.nickName, teamId: mem.matchTeamId, avatar: avatarUrl(u.avatar) } : null })
         .filter(Boolean)
       const rounds = (match.teams || []).reduce((n, t) => n + (t.score || 0), 0)
       const ctx = { map: (match.maps || []).map((x) => mapName(x.mapId)).join(' / '), date: match.startedAt }
