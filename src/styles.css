@@ -783,6 +783,94 @@ body::after {
 .btn-danger { background: var(--neg); color: #fff; border-color: var(--neg); }
 .btn-danger:hover { filter: brightness(1.06); }
 
+/* Roster builder */
+.roster-compare {
+  display: flex; align-items: center; justify-content: center; gap: 22px;
+  margin: 14px 0; padding: 14px;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--card); backdrop-filter: blur(10px);
+}
+.roster-total { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 96px; }
+.roster-total-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.roster-total-score { font-family: var(--font-mono); font-size: 30px; font-weight: 700; color: var(--accent-text); }
+
+.roster-team { margin-bottom: 4px; }
+.roster-team-head {
+  display: flex; align-items: baseline; gap: 8px;
+  margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+/* Each team stands as one horizontal row of 5, facing the other team's row
+   across the compare bar. */
+.roster-team-drop {
+  display: flex; flex-direction: row; flex-wrap: nowrap; justify-content: center;
+  gap: 10px; min-height: 194px; padding: 6px 4px;
+  border: 1px dashed var(--line); border-radius: var(--radius);
+  overflow-x: auto;
+  transition: background 0.12s;
+}
+.roster-team-drop.over { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+
+.roster-pool { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-start; min-height: 64px; }
+
+/* Shield card: an original silhouette (clip-path defined once per page via
+   ShieldClipDef), tinted by score tier — gold 85-100, silver 70-84, bronze
+   50-69. Not a trace of any specific trading-card brand's artwork/textures. */
+.fifa-frame {
+  flex: 0 0 auto;
+  width: clamp(92px, 15vw, 138px);
+  height: clamp(130px, 21vw, 194px);
+  clip-path: url(#fifa-shield-clip);
+  cursor: grab; user-select: none; touch-action: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: transform 0.12s;
+}
+.fifa-frame.dragging { opacity: 0.35; }
+.fifa-frame.overlay { cursor: grabbing; transform: scale(1.05); }
+.fifa-frame.tier-gold { background: linear-gradient(160deg, #fff6cf 0%, #e8b923 40%, #9c6d0a 100%); }
+.fifa-frame.tier-silver { background: linear-gradient(160deg, #ffffff 0%, #b9c2c9 40%, #626a70 100%); }
+.fifa-frame.tier-bronze { background: linear-gradient(160deg, #f3cda4 0%, #b97a45 40%, #63380f 100%); }
+.fifa-slot-empty { background: var(--card); opacity: 0.4; box-shadow: none; cursor: default; }
+
+.fifa-card {
+  position: relative;
+  width: 100%; height: 100%;
+  padding: 11% 7% 8%;
+  display: flex; flex-direction: column; align-items: center;
+  clip-path: url(#fifa-shield-clip);
+}
+.fifa-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(115deg, rgba(255, 255, 255, 0.4) 0%, transparent 32%, transparent 68%, rgba(255, 255, 255, 0.12) 100%);
+  pointer-events: none;
+}
+.tier-gold .fifa-card { color: #4a3300; }
+.tier-silver .fifa-card { color: #2a3136; }
+.tier-bronze .fifa-card { color: #3a2210; }
+
+.fifa-top { display: flex; flex-direction: column; align-items: center; z-index: 1; }
+.fifa-score { font-family: var(--font-display); font-size: clamp(16px, 3.2vw, 25px); font-weight: 800; line-height: 1; }
+.fifa-role { margin-top: 2px; font-size: clamp(7px, 1.4vw, 8.5px); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+
+.fifa-avatar {
+  margin-top: 2px; width: clamp(34px, 9vw, 52px); height: clamp(34px, 9vw, 52px);
+  border-radius: 50%; object-fit: cover; border: 2px solid rgba(255, 255, 255, 0.55); z-index: 1;
+}
+.fifa-avatar-fallback { display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.3); font-weight: 700; font-size: clamp(10px, 2.4vw, 15px); }
+
+.fifa-name {
+  margin-top: 6px; z-index: 1; max-width: 100%;
+  font-size: clamp(8px, 1.8vw, 11.5px); font-weight: 800; text-transform: uppercase; letter-spacing: 0.01em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.fifa-divider { width: 68%; height: 1px; background: currentColor; opacity: 0.35; margin: 6px 0 5px; z-index: 1; }
+
+.fifa-stats { z-index: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; }
+.fifa-stat { display: flex; align-items: center; gap: 3px; font-size: clamp(7px, 1.6vw, 10px); font-weight: 700; }
+.fifa-stat-val { font-family: var(--font-mono); min-width: 14px; text-align: right; }
+.fifa-stat-label { opacity: 0.75; letter-spacing: 0.01em; }
+
 /* ---- Mobile ---- */
 html, body { max-width: 100%; overflow-x: hidden; }
 
@@ -820,6 +908,11 @@ html, body { max-width: 100%; overflow-x: hidden; }
   .tier-label { flex-basis: 44px; font-size: 18px; }
   .chip { font-size: 12px; padding: 6px 9px; }
   .add-row { max-width: none; }
+
+  /* Roster builder on small screens */
+  .roster-compare { gap: 14px; padding: 12px; }
+  .roster-total-score { font-size: 24px; }
+  .roster-team-drop { gap: 6px; }
 
   .search { gap: 8px; margin: 22px 0 6px; }
   .search input { padding: 11px 13px; font-size: 14px; }

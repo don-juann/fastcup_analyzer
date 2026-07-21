@@ -9,8 +9,8 @@
 export function computeMatchPlayers(roster, kills, damages = [], clutches = []) {
   const players = new Map()
   const teamOf = new Map()
-  const blank = (id, nick, teamId) => ({
-    playerId: id, nick: nick ?? String(id), teamId: teamId ?? null,
+  const blank = (id, nick, teamId, avatar) => ({
+    playerId: id, nick: nick ?? String(id), teamId: teamId ?? null, avatar: avatar ?? null,
     kills: 0, deaths: 0, assists: 0, headshots: 0,
     firstKills: 0, firstDeaths: 0, clutches: 0,
     oneShots: 0, noScopes: 0, airShots: 0, wallBangs: 0,
@@ -18,7 +18,7 @@ export function computeMatchPlayers(roster, kills, damages = [], clutches = []) 
   })
   for (const r of roster) {
     teamOf.set(r.userId, r.teamId)
-    players.set(r.userId, blank(r.userId, r.nick, r.teamId))
+    players.set(r.userId, blank(r.userId, r.nick, r.teamId, r.avatar))
   }
   const ensure = (id) => {
     if (!players.has(id)) players.set(id, blank(id, null, teamOf.get(id)))
@@ -68,5 +68,7 @@ export function computeMatchPlayers(roster, kills, damages = [], clutches = []) 
     if (c.success && c.userId) ensure(c.userId).clutches++
   }
 
-  return [...players.values()]
+  return [...players.values()].map((p) => ({
+    ...p, sickFrags: p.oneShots + p.noScopes + p.airShots + p.wallBangs,
+  }))
 }

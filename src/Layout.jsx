@@ -43,6 +43,7 @@ export default function Layout() {
           <NavLink to="/duels">{t('nav.duels')}</NavLink>
           <NavLink to="/tierlist">{t('nav.tierlist')}</NavLink>
           <NavLink to="/hall-of-fame">{t('nav.hallOfFame')}</NavLink>
+          <NavLink to="/roster-builder">{t('nav.rosterBuilder')}</NavLink>
         </nav>
 
         <div className="topbar-right">

@@ -8,6 +8,7 @@ export const STRINGS = {
     'nav.duels': 'duels',
     'nav.tierlist': 'tierlist',
     'nav.hallOfFame': 'hall of fame',
+    'nav.rosterBuilder': 'roster builder',
     'settings.darkMode': 'dark mode',
 
     'duels.title': 'duels',
@@ -97,6 +98,19 @@ export const STRINGS = {
     'scope.noSessions': 'no sessions in this range yet',
     'scope.emptyRange': 'no matches in this range yet',
     'scope.maps': '{n} maps',
+
+    'roster.title': 'roster builder',
+    'roster.intro': 'drag players into two 5-player teams and check the balance — skill scores are pulled from real match history, not fastcup rating.',
+    'roster.teamA': 'team a',
+    'roster.teamB': 'team b',
+    'roster.autoBalance': 'auto-balance',
+    'roster.pool': 'pool',
+    'roster.poolEmpty': 'no players yet — add one below',
+    'roster.addPlayer': 'add',
+    'roster.noMatches': 'No recent matches found for this profile',
+    'roster.role.fragger': 'fragger',
+    'roster.role.support': 'support',
+    'roster.role.versatile': 'versatile',
   },
 
   kk: {
@@ -104,6 +118,7 @@ export const STRINGS = {
     'nav.duels': 'дуэльдер',
     'nav.tierlist': 'тирлист',
     'nav.hallOfFame': 'даңқ залы',
+    'nav.rosterBuilder': 'құрам құрушы',
     'settings.darkMode': 'қараңғы режим',
 
     'duels.title': 'дуэльдер',
@@ -193,6 +208,19 @@ export const STRINGS = {
     'scope.noSessions': 'бұл аралықта сессия жоқ',
     'scope.emptyRange': 'бұл аралықта матч жоқ',
     'scope.maps': '{n} карта',
+
+    'roster.title': 'құрам құрушы',
+    'roster.intro': 'ойыншыларды екі 5 адамдық құрамға сүйреп, теңгерімін тексер — ұпайлар нақты матч тарихынан алынады, fastcup рейтингінен емес.',
+    'roster.teamA': 'a командасы',
+    'roster.teamB': 'b командасы',
+    'roster.autoBalance': 'автотеңдестіру',
+    'roster.pool': 'резерв',
+    'roster.poolEmpty': 'әзірше ойыншы жоқ — төменнен қосыңыз',
+    'roster.addPlayer': 'қосу',
+    'roster.noMatches': 'Бұл профильде соңғы матчтар табылмады',
+    'roster.role.fragger': 'фраггер',
+    'roster.role.support': 'қолдау',
+    'roster.role.versatile': 'әмбебап',
   },
 }
 

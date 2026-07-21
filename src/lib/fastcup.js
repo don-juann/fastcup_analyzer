@@ -196,7 +196,7 @@ export async function scanHallOfFameData(matchList, { onProgress } = {}) {
       if (!match) return
       const kills = kData.kills || []
       const roster = (match.members || [])
-        .map((mem) => { const u = mem.private?.user; return u ? { userId: u.id, nick: u.nickName, teamId: mem.matchTeamId } : null })
+        .map((mem) => { const u = mem.private?.user; return u ? { userId: u.id, nick: u.nickName, teamId: mem.matchTeamId, avatar: u.avatar } : null })
         .filter(Boolean)
       const rounds = (match.teams || []).reduce((n, t) => n + (t.score || 0), 0)
       const ctx = { map: (match.maps || []).map((x) => mapName(x.mapId)).join(' / '), date: match.startedAt }
@@ -212,8 +212,9 @@ export async function scanHallOfFameData(matchList, { onProgress } = {}) {
 
       const ps = computeMatchPlayers(roster, kills, dData.damages || [], cData.clutches || [])
       for (const p of ps) {
-        const tot = players[p.playerId] || (players[p.playerId] = { nick: p.nick, matches: 0, kills: 0, deaths: 0, assists: 0, clutches: 0, sick: 0, fk: 0, fd: 0, dmg: 0, rounds: 0 })
+        const tot = players[p.playerId] || (players[p.playerId] = { nick: p.nick, avatar: p.avatar, matches: 0, kills: 0, deaths: 0, assists: 0, clutches: 0, sick: 0, fk: 0, fd: 0, dmg: 0, rounds: 0 })
         tot.nick = p.nick || tot.nick
+        tot.avatar = p.avatar || tot.avatar
         tot.matches++; tot.kills += p.kills; tot.deaths += p.deaths; tot.assists += p.assists
         tot.clutches += p.clutches; tot.sick += p.sickFrags; tot.fk += p.firstKills; tot.fd += p.firstDeaths
         tot.dmg += p.dmg; tot.rounds += rounds
