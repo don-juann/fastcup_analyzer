@@ -180,6 +180,11 @@ export default function RosterBuilder() {
     if (best) { setTeamA(best.a); setTeamB(best.b) }
   }
 
+  function clearTeams() {
+    setTeamA([])
+    setTeamB([])
+  }
+
   const avgOf = (ids) => (ids.length ? Math.round(ids.reduce((s, id) => s + (pool[id]?.rating.score || 0), 0) / ids.length) : 0)
   const avgA = avgOf(teamA), avgB = avgOf(teamB)
   const assignedCount = teamA.length + teamB.length
@@ -225,34 +230,41 @@ export default function RosterBuilder() {
         >
           <ShieldClipDef />
 
-          <div className="roster-workspace">
-            <div className="roster-build">
-              <TeamZone id="teamA" label={t('roster.teamA')} ids={teamA} pool={pool} t={t} />
+          <div className="roster-workspace-outer">
+            <div className="roster-workspace">
+              <div className="roster-build">
+                <TeamZone id="teamA" label={t('roster.teamA')} ids={teamA} pool={pool} t={t} />
 
-              <div className="roster-compare">
-                <div className="roster-total">
-                  <span className="roster-total-label">{t('roster.teamA')}</span>
-                  <span className="roster-total-score">{avgA || '—'}</span>
+                <div className="roster-compare">
+                  <div className="roster-total">
+                    <span className="roster-total-label">{t('roster.teamA')}</span>
+                    <span className="roster-total-score">{avgA || '—'}</span>
+                  </div>
+                  <div className="roster-compare-actions">
+                    <button className="load-btn" onClick={autoBalance} disabled={!canBalance}>
+                      {t('roster.autoBalance')}
+                    </button>
+                    <button className="load-btn" onClick={clearTeams} disabled={!assignedCount}>
+                      {t('roster.clear')}
+                    </button>
+                  </div>
+                  <div className="roster-total">
+                    <span className="roster-total-label">{t('roster.teamB')}</span>
+                    <span className="roster-total-score">{avgB || '—'}</span>
+                  </div>
                 </div>
-                <button className="load-btn" onClick={autoBalance} disabled={!canBalance}>
-                  {t('roster.autoBalance')}
-                </button>
-                <div className="roster-total">
-                  <span className="roster-total-label">{t('roster.teamB')}</span>
-                  <span className="roster-total-score">{avgB || '—'}</span>
-                </div>
+
+                <TeamZone id="teamB" label={t('roster.teamB')} ids={teamB} pool={pool} t={t} />
               </div>
 
-              <TeamZone id="teamB" label={t('roster.teamB')} ids={teamB} pool={pool} t={t} />
-            </div>
-
-            <div className="roster-sidebar">
-              <div className="pool-head">{t('roster.pool')}</div>
-              <Dropzone id="pool" className="pool roster-pool">
-                {poolIds.length
-                  ? poolIds.map((id) => <RosterCard key={id} id={id} p={pool[id]} t={t} />)
-                  : <span className="pool-empty">{t('roster.poolEmpty')}</span>}
-              </Dropzone>
+              <div className="roster-sidebar">
+                <div className="pool-head">{t('roster.pool')}</div>
+                <Dropzone id="pool" className="pool roster-pool">
+                  {poolIds.length
+                    ? poolIds.map((id) => <RosterCard key={id} id={id} p={pool[id]} t={t} />)
+                    : <span className="pool-empty">{t('roster.poolEmpty')}</span>}
+                </Dropzone>
+              </div>
             </div>
           </div>
 

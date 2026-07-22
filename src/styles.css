@@ -788,25 +788,46 @@ body::after {
 .roster-add-row { margin: 0; max-width: 320px; flex: 1 1 240px; }
 
 /* Two-part workspace: team-building on one side, the player pool on the
-   other, in a single container. On desktop it breaks out to the full
-   viewport width (independent of the site's normal 960px column) so both
-   sides have real room; below that it just stacks like everything else. */
+   other, in a single container. The outer layer breaks out of the site's
+   normal 960px column to the full viewport width; the inner layer re-centers
+   itself with its own cap, so wide monitors get generous side margins
+   instead of the workspace stretching edge to edge. Below the breakpoint it
+   just stacks like everything else. */
+.roster-workspace-outer { display: contents; }
 .roster-workspace { display: flex; flex-direction: column; gap: 18px; }
 .roster-build { min-width: 0; }
 
 @media (min-width: 900px) {
-  .roster-workspace {
-    display: grid;
-    grid-template-columns: 1fr 300px;
-    align-items: start;
-    gap: 28px;
+  .roster-workspace-outer {
+    display: block;
     width: 100vw;
     margin-left: calc(50% - 50vw);
+  }
+  .roster-workspace {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    align-items: start;
+    gap: 28px;
+    max-width: 1200px;
+    margin: 0 auto;
     padding: 0 24px;
     box-sizing: border-box;
   }
   .roster-sidebar { max-height: 700px; overflow-y: auto; padding-right: 4px; }
 }
+
+/* Slim, theme-colored scrollbars instead of the bulky OS default — used
+   wherever a team row or the pool sidebar has to scroll. */
+.roster-team-drop, .roster-sidebar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+.roster-team-drop::-webkit-scrollbar, .roster-sidebar::-webkit-scrollbar { width: 6px; height: 6px; }
+.roster-team-drop::-webkit-scrollbar-track, .roster-sidebar::-webkit-scrollbar-track { background: transparent; }
+.roster-team-drop::-webkit-scrollbar-thumb, .roster-sidebar::-webkit-scrollbar-thumb {
+  background: var(--line); border-radius: 999px;
+}
+.roster-team-drop::-webkit-scrollbar-thumb:hover, .roster-sidebar::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
 .roster-compare {
   display: flex; align-items: center; justify-content: center; gap: 22px;
@@ -814,6 +835,7 @@ body::after {
   border: 1px solid var(--line); border-radius: var(--radius);
   background: var(--card); backdrop-filter: blur(10px);
 }
+.roster-compare-actions { display: flex; align-items: center; gap: 8px; }
 .roster-total { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 96px; }
 .roster-total-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 .roster-total-score { font-family: var(--font-mono); font-size: 30px; font-weight: 700; color: var(--accent-text); }
@@ -835,7 +857,17 @@ body::after {
 }
 .roster-team-drop.over { background: color-mix(in srgb, var(--accent) 14%, transparent); }
 
-.roster-pool { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; min-height: 64px; }
+/* Cards keep the same fixed size as the team rows (no shrinking to fit) —
+   they just wrap into however many full-size columns the sidebar fits
+   (2-3 typically) and the sidebar scrolls vertically for the rest. */
+.roster-pool {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-start;
+  align-content: start;
+  min-height: 64px;
+}
 
 /* Shield card: an original silhouette (clip-path defined once per page via
    ShieldClipDef), tinted by score tier — gold 85-100, silver 70-84, bronze
@@ -862,8 +894,9 @@ body::after {
 .fifa-card {
   position: relative;
   width: 100%; height: 100%;
-  padding: 7% 8% 18%;
+  padding: 8% 8% 18%;
   display: flex; flex-direction: column; align-items: center;
+  justify-content: flex-end;
   clip-path: url(#fifa-shield-clip);
 }
 .fifa-card::before {

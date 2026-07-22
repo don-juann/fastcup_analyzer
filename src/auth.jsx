@@ -4,11 +4,11 @@ import { api } from './lib/api.js'
 const AuthCtx = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
-  const [ready, setReady] = useState(false)
+  const [user, setUser] = useState({ id: 1, nickname: 'TEST_STUB', fastcupId: 685178 })
+  const [ready, setReady] = useState(true)
 
   useEffect(() => {
-    api.me().then((r) => setUser(r.user)).catch(() => {}).finally(() => setReady(true))
+    // TEMP TEST STUB — DO NOT COMMIT
   }, [])
 
   const value = {
