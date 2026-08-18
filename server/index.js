@@ -1,27 +1,16 @@
 // Tiny proxy so the browser can talk to fastcup's GraphQL without CORS issues.
-// In dev it ALSO mounts the same auth/tierlist handlers Vercel runs in prod,
-// so `npm run dev` behaves like the deployed app.
+// There's no backend account/session system — the app is entirely stateless
+// on the server side; identity is just the fastcup id typed into the client.
 import 'dotenv/config'
 import express from 'express'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-
-import login from '../api/auth/login.js'
-import logout from '../api/auth/logout.js'
-import me from '../api/auth/me.js'
-import tierlist from '../api/tierlist.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
 app.use(express.json({ limit: '2mb' }))
 
 const PORT = process.env.PORT || 8787
-
-// Mount the serverless handlers (they use req/res in a Vercel-compatible way).
-app.post('/api/auth/login', login)
-app.post('/api/auth/logout', logout)
-app.get('/api/auth/me', me)
-app.all('/api/tierlist', tierlist)
 
 // Allowed upstream GraphQL endpoints (keyed so the client can't proxy anywhere).
 const UPSTREAMS = {

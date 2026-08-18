@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import {
   DndContext, DragOverlay, PointerSensor, TouchSensor, useSensor, useSensors,
@@ -6,7 +6,6 @@ import {
 } from '@dnd-kit/core'
 import { useAuth } from '../auth.jsx'
 import { useLang } from '../i18n.jsx'
-import { api } from '../lib/api.js'
 import { fetchPlayedWith } from '../lib/fastcup.js'
 
 const TIERS = ['S', 'A', 'B', 'C', 'D', 'F']
@@ -30,13 +29,10 @@ export default function Tierlist() {
   const [book, setBook] = useState(emptyBook)
   const [mode, setMode] = useState('manual')
   const [activeId, setActiveId] = useState(null)
-  const [status, setStatus] = useState('loading') // loading | ready | error
   const [importing, setImporting] = useState(false)
   const [error, setError] = useState('')
-  const [saved, setSaved] = useState('saved')
   const [newName, setNewName] = useState('')
   const [confirmId, setConfirmId] = useState(null)
-  const loadedRef = useRef(false)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -46,49 +42,12 @@ export default function Tierlist() {
   const selfId = user ? String(user.fastcupId) : null
   const current = book[mode]
 
-  // Initial load.
-  useEffect(() => {
-    if (!ready || !user) return
-    let cancelled = false
-    ;(async () => {
-      try {
-        const { data } = await api.getTierlist()
-        if (cancelled) return
-        const loaded = emptyBook()
-        if (data?.manual || data?.imported) {
-          if (data.manual?.players?.length) loaded.manual = data.manual
-          if (data.imported) loaded.imported = data.imported
-          setMode(data.mode === 'imported' ? 'imported' : 'manual')
-        } else if (data?.players?.length) {
-          // migrate old (fastcup-derived) shape -> imported
-          loaded.imported = { players: data.players, placements: data.placements || {} }
-          setMode('imported')
-        }
-        setBook(loaded)
-        setStatus('ready')
-        loadedRef.current = true
-      } catch (e) {
-        if (!cancelled) { setError(e.message || String(e)); setStatus('error') }
-      }
-    })()
-    return () => { cancelled = true }
-  }, [ready, user])
-
-  // Debounced autosave.
-  useEffect(() => {
-    if (!loadedRef.current) return
-    setSaved('saving')
-    const t = setTimeout(() => {
-      api.saveTierlist({ mode, manual: book.manual, imported: book.imported })
-        .then(() => setSaved('saved'))
-        .catch(() => setSaved('error'))
-    }, 600)
-    return () => clearTimeout(t)
-  }, [book, mode])
+  // No account, no server — the tierlist starts blank (or freshly re-imported
+  // from fastcup) every time this page mounts. Nothing to load or save.
 
   // Lazily import fastcup players when imported mode is first used.
   useEffect(() => {
-    if (mode === 'imported' && loadedRef.current && !book.imported.players.length && !importing) {
+    if (mode === 'imported' && !book.imported.players.length && !importing) {
       importPlayers()
     }
   }, [mode]) // eslint-disable-line
@@ -161,9 +120,6 @@ export default function Tierlist() {
     <div className="tl">
       <div className="tl-head">
         <h1>{t('tierlist.title')}<span className="dot">.</span></h1>
-        <span className={`save-state ${saved}`}>
-          {saved === 'saving' ? t('tierlist.saving') : saved === 'error' ? t('tierlist.saveFailed') : t('tierlist.saved')}
-        </span>
       </div>
 
       <div className="mode-toggle">
@@ -184,7 +140,7 @@ export default function Tierlist() {
         </button>
       )}
 
-      {status === 'error' && <p className="error">{error}</p>}
+      {error && <p className="error">{error}</p>}
       {!manual && importing && !current.players.length && (
         <p className="note">{t('tierlist.loadingPeople')}</p>
       )}

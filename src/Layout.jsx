@@ -5,7 +5,7 @@ import { useLang } from './i18n.jsx'
 import { WALLPAPERS, applyTheme, applyWallpaper } from './theme.js'
 
 export default function Layout() {
-  const { user, logout } = useAuth()
+  const { user, forget } = useAuth()
   const { lang, setLang, t } = useLang()
   const navigate = useNavigate()
   const [theme, setTheme] = useState(() => localStorage.getItem('fc-theme') || 'dark')
@@ -76,7 +76,7 @@ export default function Layout() {
                 {user ? (
                   <button
                     className="settings-row act"
-                    onClick={async () => { setOpen(false); await logout(); navigate('/') }}
+                    onClick={() => { setOpen(false); forget(); navigate('/') }}
                   >
                     {t('settings.logout')}
                   </button>

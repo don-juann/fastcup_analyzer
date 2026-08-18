@@ -35,7 +35,7 @@ const QUICK_PLAYERS = [
 ]
 
 export default function Identify() {
-  const { user, ready, login } = useAuth()
+  const { user, ready, identify } = useAuth()
   const { t } = useLang()
   const navigate = useNavigate()
   const [link, setLink] = useState('')
@@ -50,7 +50,7 @@ export default function Identify() {
     try {
       const fastcupId = parseProfileId(link)
       const nickname = await resolveNickname(fastcupId)
-      await login({ fastcupId, nickname })
+      identify({ fastcupId, nickname })
       navigate('/analyzer')
     } catch (err) {
       setError(err.message || String(err))
@@ -59,20 +59,13 @@ export default function Identify() {
     }
   }
 
-  async function onQuickPick(e) {
+  function onQuickPick(e) {
     const id = Number(e.target.value)
     e.target.value = ''
     if (!id) return
     const player = QUICK_PLAYERS.find((p) => p.id === id)
-    setError(''); setBusy(true)
-    try {
-      await login({ fastcupId: id, nickname: player?.nick })
-      navigate('/analyzer')
-    } catch (err) {
-      setError(err.message || String(err))
-    } finally {
-      setBusy(false)
-    }
+    identify({ fastcupId: id, nickname: player?.nick })
+    navigate('/analyzer')
   }
 
   return (

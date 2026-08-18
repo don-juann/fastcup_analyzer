@@ -1,21 +1,32 @@
-import { createContext, useContext, useEffect, useState } from 'react'
-import { api } from './lib/api.js'
+import { createContext, useContext, useState } from 'react'
+
+// No accounts, no passwords, no server-side session — "identity" is just
+// the fastcup profile id/nickname the person typed in, kept in localStorage
+// so it survives a reload but never leaves the browser.
+const IDENTITY_KEY = 'fc-identity'
+
+function loadIdentity() {
+  try { return JSON.parse(localStorage.getItem(IDENTITY_KEY) || 'null') } catch { return null }
+}
 
 const AuthCtx = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState({ id: 1, nickname: 'TEST_STUB', fastcupId: 685178 })
-  const [ready, setReady] = useState(true)
-
-  useEffect(() => {
-    // TEMP TEST STUB — DO NOT COMMIT
-  }, [])
+  const [user, setUser] = useState(loadIdentity)
 
   const value = {
     user,
-    ready,
-    async login(body) { const r = await api.login(body); setUser(r.user); return r.user },
-    async logout() { await api.logout().catch(() => {}); setUser(null) },
+    ready: true,
+    identify({ fastcupId, nickname }) {
+      const next = { fastcupId, nickname: (nickname || '').trim() || `Player ${fastcupId}` }
+      try { localStorage.setItem(IDENTITY_KEY, JSON.stringify(next)) } catch { /* quota */ }
+      setUser(next)
+      return next
+    },
+    forget() {
+      try { localStorage.removeItem(IDENTITY_KEY) } catch { /* quota */ }
+      setUser(null)
+    },
   }
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>
 }
