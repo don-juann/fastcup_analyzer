@@ -131,7 +131,7 @@ export async function fetchMatchKills(matchId) {
 }
 
 // Run async tasks with bounded concurrency.
-async function mapPool(items, limit, fn) {
+export async function mapPool(items, limit, fn) {
   const out = new Array(items.length)
   let i = 0
   const worker = async () => {

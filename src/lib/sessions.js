@@ -1,7 +1,18 @@
 // Pure logic: group matches into "sessions" and aggregate per-player stats.
 //
 // Session rule: matches stay in one session while within a ~2-day span of each
-// other, capped at 5 matches. A bigger gap or the 6th match starts a new one.
+// other, capped at 5 matches, AND (when roster data is available — see below)
+// while the same 10 players keep playing together. Any one of a bigger gap,
+// the 6th match, or the roster changing starts a new session. Time/count
+// alone would let two genuinely unrelated get-togethers a day and a half
+// apart — zero overlapping players — land in one group, with the 5-match cap
+// then slicing the boundary at an arbitrary point inside it rather than where
+// the players actually changed.
+//
+// Roster-awareness is opt-in: pass each match's `.rosterIds` (all participant
+// ids) if you have them. Callers that don't fetch rosters (cheaper, but blind
+// to this failure mode) just get the old time/count-only behavior — matches
+// with no `.rosterIds` are treated as "unknown, don't split on this".
 //
 // Team grouping is USER-CENTRIC: match team ids change every game, so we split
 // players into "your team" vs "opponents" by who shared the viewed user's team
@@ -10,7 +21,15 @@
 export const DEFAULT_SPAN_DAYS = 2
 export const MAX_MATCHES_PER_SESSION = 5
 
-// matches need: { id, startedAt(ms) } at minimum for grouping.
+const sameRoster = (a, b) => {
+  if (!a || !b) return true // unknown roster (not fetched) — don't split on missing data
+  if (a.length !== b.length) return false
+  const setA = new Set(a)
+  return b.every((id) => setA.has(id))
+}
+
+// matches need: { id, startedAt(ms) } at minimum for grouping, plus optional
+// `.rosterIds` (array of participant ids) to also split on roster changes.
 export function groupIntoSessions(matches, {
   spanDays = DEFAULT_SPAN_DAYS,
   maxMatches = MAX_MATCHES_PER_SESSION,
@@ -23,17 +42,20 @@ export function groupIntoSessions(matches, {
   for (const m of sorted) {
     const tooFar = current && m.startedAt - current.endedAt > gapMs
     const tooMany = current && current.matches.length >= maxMatches
-    if (!current || tooFar || tooMany) {
+    const rosterChanged = current && !sameRoster(current.lastRosterIds, m.rosterIds)
+    if (!current || tooFar || tooMany || rosterChanged) {
       current = { startedAt: m.startedAt, endedAt: m.startedAt, matches: [] }
       sessions.push(current)
     }
     current.matches.push(m)
     current.endedAt = m.startedAt
+    current.lastRosterIds = m.rosterIds
   }
 
   sessions.forEach((s) => {
     s.id = String(s.startedAt)
     s.matches.sort((a, b) => a.startedAt - b.startedAt)
+    delete s.lastRosterIds
   })
   return sessions.reverse() // newest session first
 }

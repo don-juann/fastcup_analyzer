@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { groupIntoSessions, aggregateSession } from '../lib/sessions.js'
-import { parseProfileId, fetchRecentMatchList, loadSessionMatches } from '../lib/fastcup.js'
+import { parseProfileId, fetchRecentMatchList, fetchMatchRoster, loadSessionMatches, mapPool } from '../lib/fastcup.js'
 import { useAuth } from '../auth.jsx'
 import { useLang } from '../i18n.jsx'
 
@@ -24,6 +24,17 @@ export default function Analyzer() {
       const list = await fetchRecentMatchList(uid)
       if (!list.length) throw new Error(t('analyzer.noMatches'))
       setUserId(uid)
+
+      // Grouping by time/count alone can merge unrelated get-togethers (or
+      // split one at an arbitrary point via the match cap) if they happen to
+      // fall close together — so fetch each match's actual roster first and
+      // let groupIntoSessions also split wherever the 10 players change.
+      await mapPool(list, 6, async (m) => {
+        try {
+          const roster = await fetchMatchRoster(m.id)
+          m.rosterIds = roster.map((p) => p.id)
+        } catch { /* leave rosterIds unset — treated as "unknown, don't split" */ }
+      })
       setSessions(groupIntoSessions(list))
     } catch (err) {
       setError(err.message || String(err))
