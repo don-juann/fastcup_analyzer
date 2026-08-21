@@ -74,6 +74,9 @@ export default function Identify() {
         <div className="identify-left">
           <h1 className="identify-title">{t('auth.heading')}<span className="dot">.</span></h1>
           <p className="identify-sub">{t('auth.description')}</p>
+          <a className="identify-find-id" href="https://cs2.fastcup.net" target="_blank" rel="noopener noreferrer">
+            {t('auth.findId')}
+          </a>
 
           <form className="identify-form" onSubmit={onSubmit}>
             <label>

@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 // terms and stay as-is. Kazakh is a first-pass draft — correct freely.
 export const STRINGS = {
   en: {
-    'nav.analyzer': 'matches',
+    'nav.analyzer': 'results',
     'nav.duels': 'duels',
     'nav.tierlist': 'tierlist',
     'nav.hallOfFame': 'hall of fame',
@@ -83,6 +83,7 @@ export const STRINGS = {
     'auth.login': 'continue',
     'auth.heading': 'enter your fastcup link',
     'auth.description': 'Track your CS2 matches, duels, tierlists, and hall-of-fame records — all pulled straight from your fastcup profile.',
+    'auth.findId': "Don't know your ID? Go to fastcup.net",
     'auth.linkLabel': 'fastcup profile link',
     'auth.or': 'or',
     'auth.quickLabel': 'choose your profile',
@@ -112,7 +113,7 @@ export const STRINGS = {
   },
 
   kk: {
-    'nav.analyzer': 'матчтар',
+    'nav.analyzer': 'нәтижелер',
     'nav.duels': 'дуэльдер',
     'nav.tierlist': 'тирлист',
     'nav.hallOfFame': 'даңқ залы',
@@ -191,6 +192,7 @@ export const STRINGS = {
     'auth.login': 'жалғастыру',
     'auth.heading': 'fastcup сілтемеңді енгіз',
     'auth.description': 'CS2 матчтарыңды, дуэльдерді, тирлисттер мен даңқ залы жазбаларын — тікелей fastcup профилің арқылы бақыла.',
+    'auth.findId': 'ID-ыңды білмейсің бе? fastcup.net сайтына өт',
     'auth.linkLabel': 'fastcup профиль сілтемесі',
     'auth.or': 'немесе',
     'auth.quickLabel': 'профиліңді таңда',
