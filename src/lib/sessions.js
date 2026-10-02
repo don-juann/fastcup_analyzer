@@ -125,14 +125,29 @@ export function aggregateSession(session, userId) {
   return { sides, scoreline, matchCount: session.matches.length }
 }
 
-// Cheap per-session record (map count + W/L) from lightweight match-list
-// entries — each match just needs .teams[].isWinner and .myTeamId, no full
-// per-player detail required. Used for session-picker summaries.
+// Every played map of a session as { matchId, mapName, you, opp, won }, in
+// play order, from lightweight match-list entries (no per-player detail
+// needed). A BO3/BO5 contributes one row per map; an entry without per-map
+// data falls back to its match-level score.
+export function sessionMaps(session) {
+  return session.matches.flatMap((m) => {
+    const maps = m.maps?.length ? m.maps : [{ id: m.id, mapName: m.mapName, teams: m.teams }]
+    return maps.map((mp) => {
+      const mine = mp.teams.find((t) => t.id === m.myTeamId)
+      const opp = mp.teams.find((t) => t.id !== m.myTeamId)
+      return {
+        key: `${m.id}:${mp.id}`, matchId: m.id, matchMapId: mp.id,
+        mapName: mp.mapName, bestOf: m.bestOf,
+        you: mine?.score ?? 0, opp: opp?.score ?? 0, won: !!mine?.isWinner,
+      }
+    })
+  })
+}
+
+// Cheap per-session record (map count + W/L per map). Used for session-picker
+// summaries.
 export function summarizeSession(session) {
-  let wins = 0
-  for (const m of session.matches) {
-    const mine = m.teams.find((t) => t.id === m.myTeamId)
-    if (mine?.isWinner) wins++
-  }
-  return { mapCount: session.matches.length, wins, losses: session.matches.length - wins }
+  const maps = sessionMaps(session)
+  const wins = maps.filter((m) => m.won).length
+  return { mapCount: maps.length, wins, losses: maps.length - wins }
 }

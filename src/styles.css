@@ -246,6 +246,15 @@ body::after {
 .map.win { border-color: var(--win-line); background: var(--win-bg); color: var(--win-ink); }
 .map.loss { border-color: var(--loss-line); background: var(--loss-bg); color: var(--loss-ink); }
 .map.win b, .map.loss b { color: inherit; }
+/* series tag on the chips of a BO3/BO5 map */
+.map .bo {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  opacity: 0.65;
+  margin-right: -2px;
+}
 .map.active {
   border-color: var(--accent);
   color: var(--ink);

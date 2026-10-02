@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import { groupIntoSessions, aggregateSession } from '../lib/sessions.js'
+import { groupIntoSessions, aggregateSession, sessionMaps } from '../lib/sessions.js'
 import { parseProfileId, fetchRecentMatchList, fetchMatchRoster, loadSessionMatches, mapPool } from '../lib/fastcup.js'
 import { useAuth } from '../auth.jsx'
 import { useLang } from '../i18n.jsx'
@@ -72,26 +72,18 @@ const COLS = [
   ['firstKills', 'FK'], ['firstDeaths', 'FD'], ['clutches', 'CL'],
 ]
 
-function lightScoreline(session, userId) {
-  return session.matches.map((m) => {
-    const mine = m.teams.find((t) => t.id === m.myTeamId)
-    const opp = m.teams.find((t) => t.id !== m.myTeamId)
-    return { mapName: m.mapName, you: mine?.score ?? 0, opp: opp?.score ?? 0, won: !!mine?.isWinner }
-  })
-}
-
 function SessionCard({ session, userId, autoLoad }) {
   const { t, lang } = useLang()
-  const [matches, setMatches] = useState(null) // normalized full matches
+  const [maps, setMaps] = useState(null) // normalized full stats, one entry per played map
   const [status, setStatus] = useState('idle') // idle | loading | error
   const [err, setErr] = useState('')
-  const [selected, setSelected] = useState('all') // 'all' | match index
+  const [selected, setSelected] = useState('all') // 'all' | a map chip's key
 
   async function ensureLoaded() {
-    if (matches || status === 'loading') return
+    if (maps || status === 'loading') return
     setStatus('loading'); setErr('')
     try {
-      setMatches(await loadSessionMatches(session))
+      setMaps(await loadSessionMatches(session))
       setStatus('done')
     } catch (e) {
       setErr(e.message || String(e)); setStatus('error')
@@ -104,19 +96,22 @@ function SessionCard({ session, userId, autoLoad }) {
 
   const d = new Date(session.startedAt)
   const dateLabel = d.toLocaleDateString(lang === 'kk' ? 'kk' : 'en', { day: 'numeric', month: 'long', year: 'numeric' })
-  const chips = lightScoreline(session, userId) // every map, always shown
+  // One chip per played map — a BO3/BO5 is a single match on fastcup, but each
+  // of its maps gets its own chip and its own stats table.
+  const chips = useMemo(() => sessionMaps(session), [session])
 
   const agg = useMemo(() => {
-    if (!matches) return null
-    const subset = selected === 'all' ? matches : [matches[selected]]
+    if (!maps) return null
+    const subset = selected === 'all' ? maps : maps.filter((u) => `${u.matchId}:${u.id}` === selected)
+    if (!subset.length) return null
     return aggregateSession({ ...session, matches: subset }, userId)
-  }, [matches, selected, userId, session])
+  }, [maps, selected, userId, session])
 
   return (
     <section className="session">
       <div className="session-head">
         <h2>{dateLabel}</h2>
-        <span className="count">{t('analyzer.matches', { n: session.matches.length })}</span>
+        <span className="count">{t('analyzer.maps', { n: chips.length })}</span>
       </div>
 
       <div className="filters">
@@ -126,12 +121,14 @@ function SessionCard({ session, userId, autoLoad }) {
         >
           {t('analyzer.allMaps')}
         </button>
-        {chips.map((m, i) => (
+        {chips.map((m) => (
           <button
-            key={i}
-            className={`map ${m.won ? 'win' : 'loss'} ${selected === i ? 'active' : ''}`}
-            onClick={() => pick(i)}
+            key={m.key}
+            className={`map ${m.won ? 'win' : 'loss'} ${selected === m.key ? 'active' : ''}`}
+            title={m.bestOf > 1 ? `BO${m.bestOf}` : undefined}
+            onClick={() => pick(m.key)}
           >
+            {m.bestOf > 1 && <span className="bo">BO{m.bestOf}</span>}
             {m.mapName} <b>{m.you}:{m.opp}</b>
           </button>
         ))}
@@ -139,7 +136,7 @@ function SessionCard({ session, userId, autoLoad }) {
 
       {status === 'loading' && <p className="note">{t('analyzer.loadingBoards')}</p>}
       {status === 'error' && <p className="error">{err}</p>}
-      {!matches && status === 'idle' && (
+      {!maps && status === 'idle' && (
         <p className="note">{t('analyzer.selectMap')}</p>
       )}
 

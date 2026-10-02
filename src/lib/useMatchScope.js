@@ -22,7 +22,8 @@ export function scopeKeyOf(scope) {
 }
 
 export function useMatchScope(uid, cacheName) {
-  const cacheKey = `${cacheName}-${uid}`
+  // v2: cached match lists now carry per-map results (BO3/BO5 split by map)
+  const cacheKey = `${cacheName}-v2-${uid}`
   const [matchList, setMatchList] = useState(null)
   const [status, setStatus] = useState('loading') // loading | ready | error
   const [error, setError] = useState('')

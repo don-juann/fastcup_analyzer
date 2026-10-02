@@ -2,7 +2,7 @@
 // The three query strings in queries.json are byte-exact captures from the
 // real frontend — they must NOT be edited or the allowlist rejects them.
 import QUERIES from './queries.json'
-import { computeMatchPlayers } from './stats.js'
+import { computeMapStats, playedMaps } from './stats.js'
 import { mapName, setMaps } from './maps.js'
 
 const GAME_ID = 3 // CS2
@@ -53,11 +53,18 @@ export async function fetchRecentMatchList(userId, limit = 16, { gt } = {}) {
     .filter((mm) => mm.match && mm.match.finishedAt)
     .map((mm) => {
       const match = mm.match
-      const maps = (match.maps || []).map((x) => x.mapId)
+      // one entry per match (a BO3/BO5 is a single match), but with each
+      // played map's own result so callers can show/split them per map
+      const maps = playedMaps(match).map((u) => ({
+        id: u.id, number: u.number, mapId: u.mapId, mapName: mapName(u.mapId),
+        teams: u.teams.map((t) => ({ id: t.id, score: t.score, isWinner: t.isWinner })),
+      }))
       return {
         id: match.id,
         startedAt: ms(match.finishedAt),
-        mapName: maps.map(mapName).join(' / ') || '—',
+        bestOf: match.bestOf,
+        maps,
+        mapName: maps.map((x) => x.mapName).join(' / ') || '—',
         teams: [...(match.teams || [])].map((t) => ({ id: t.id, score: t.score, isWinner: t.isWinner })),
         myTeamId: mm.matchTeamId,
         userKda: {
@@ -69,9 +76,9 @@ export async function fetchRecentMatchList(userId, limit = 16, { gt } = {}) {
     })
 }
 
-// Full per-player breakdown for one match: roster + team names from __GetMatch,
-// per-player stats computed from the raw kill events.
-export async function fetchMatchFull(matchId) {
+// Everything needed to compute stats for one match: the match itself (roster,
+// teams, maps) plus the raw kill/damage/clutch events.
+async function fetchMatchBundle(matchId) {
   const [detailData, killsData, damagesData, clutchesData] = await Promise.all([
     gql(QUERIES.getMatch, { matchId, gameId: GAME_ID }),
     gql(QUERIES.getMatchKills, { matchId }),
@@ -79,38 +86,40 @@ export async function fetchMatchFull(matchId) {
     gql(QUERIES.getMatchClutches, { matchId }),
   ])
   const match = detailData.match
-  const kills = killsData.kills || []
-  const damages = damagesData.damages || []
-  const clutches = clutchesData.clutches || []
-
-  const roster = (match.members || [])
+  const roster = (match?.members || [])
     .map((mem) => {
       const u = mem.private?.user
-      return u ? { userId: u.id, nick: u.nickName, teamId: mem.matchTeamId } : null
+      return u ? { userId: u.id, nick: u.nickName, teamId: mem.matchTeamId, avatar: avatarUrl(u.avatar) } : null
     })
     .filter(Boolean)
-
-  const players = computeMatchPlayers(roster, kills, damages, clutches)
-  const maps = (match.maps || []).map((x) => x.mapId)
-  const teams = [...(match.teams || [])].map((t) => ({
-    id: t.id, name: t.name, score: t.score, isWinner: t.isWinner,
-  }))
-  const rounds = teams.reduce((n, t) => n + (t.score || 0), 0)
-
   return {
-    id: match.id,
-    startedAt: ms(match.startedAt || match.finishedAt),
-    mapName: maps.map(mapName).join(' / ') || '—',
-    teams,
-    rounds,
-    players,
+    match, roster,
+    kills: killsData.kills || [],
+    damages: damagesData.damages || [],
+    clutches: clutchesData.clutches || [],
   }
 }
 
-// Load full normalized matches for a session (list-level matches in -> detailed
-// matches out), ready for aggregateSession().
+// Full per-player breakdown for one match, SPLIT BY MAP: a BO1 gives one entry,
+// a BO3/BO5 gives one per played map, each with its own scoreline, round count
+// and per-player stats (so ADR is per round of that map, not of the series).
+export async function fetchMatchMaps(matchId) {
+  const { match, roster, kills, damages, clutches } = await fetchMatchBundle(matchId)
+  return computeMapStats(match, roster, kills, damages, clutches).map((u) => ({
+    ...u,
+    matchId: match.id,
+    bestOf: match.bestOf,
+    startedAt: ms(u.startedAt || match.startedAt || match.finishedAt),
+    mapName: mapName(u.mapId),
+  }))
+}
+
+// Load the per-map entries for every match in a session (list-level matches
+// in -> one detailed entry per played map out, in play order), ready for
+// aggregateSession().
 export async function loadSessionMatches(session) {
-  return Promise.all(session.matches.map((m) => fetchMatchFull(m.id)))
+  const perMatch = await Promise.all(session.matches.map((m) => fetchMatchMaps(m.id)))
+  return perMatch.flat()
 }
 
 // Just the roster of a match (lightweight — no kills/damages).
@@ -190,20 +199,8 @@ export async function scanHallOfFameData(matchList, { onProgress } = {}) {
 
   await mapPool(matchList, 6, async (m) => {
     try {
-      const [detail, kData, dData, cData] = await Promise.all([
-        gql(QUERIES.getMatch, { matchId: m.id, gameId: GAME_ID }),
-        gql(QUERIES.getMatchKills, { matchId: m.id }),
-        gql(QUERIES.getMatchDamages, { matchId: m.id }),
-        gql(QUERIES.getMatchClutches, { matchId: m.id }),
-      ])
-      const match = detail.match
+      const { match, roster, kills, damages, clutches } = await fetchMatchBundle(m.id)
       if (!match) return
-      const kills = kData.kills || []
-      const roster = (match.members || [])
-        .map((mem) => { const u = mem.private?.user; return u ? { userId: u.id, nick: u.nickName, teamId: mem.matchTeamId, avatar: avatarUrl(u.avatar) } : null })
-        .filter(Boolean)
-      const rounds = (match.teams || []).reduce((n, t) => n + (t.score || 0), 0)
-      const ctx = { map: (match.maps || []).map((x) => mapName(x.mapId)).join(' / '), date: match.startedAt }
 
       // weapon names from highlights
       for (const mp of match.maps || []) {
@@ -214,21 +211,27 @@ export async function scanHallOfFameData(matchList, { onProgress } = {}) {
         }
       }
 
-      const ps = computeMatchPlayers(roster, kills, dData.damages || [], cData.clutches || [])
-      for (const p of ps) {
-        const tot = players[p.playerId] || (players[p.playerId] = { nick: p.nick, avatar: p.avatar, matches: 0, kills: 0, deaths: 0, assists: 0, clutches: 0, sick: 0, fk: 0, fd: 0, dmg: 0, rounds: 0 })
-        tot.nick = p.nick || tot.nick
-        tot.avatar = p.avatar || tot.avatar
-        tot.matches++; tot.kills += p.kills; tot.deaths += p.deaths; tot.assists += p.assists
-        tot.clutches += p.clutches; tot.sick += p.sickFrags; tot.fk += p.firstKills; tot.fd += p.firstDeaths
-        tot.dmg += p.dmg; tot.rounds += rounds
-        const h = { nick: p.nick, playerId: p.playerId, ctx }
-        consider('matchKills', p.kills, h)
-        consider('matchDeaths', p.deaths, h)
-        consider('matchAssists', p.assists, h)
-        consider('matchAdr', rounds > 0 ? Math.round(p.dmg / rounds) : null, h)
-        consider('matchPlusMinus', p.kills - p.deaths, h)
-        consider('matchSick', p.sickFrags, h)
+      // Stats are per MAP, not per match: in a BO3/BO5 the match-level score is
+      // the series score (e.g. 1:2), so using it as the round count would blow
+      // ADR up, and single-map records would really be whole-series totals.
+      for (const u of computeMapStats(match, roster, kills, damages, clutches)) {
+        const rounds = u.rounds
+        const ctx = { map: mapName(u.mapId), date: u.startedAt || match.startedAt }
+        for (const p of u.players) {
+          const tot = players[p.playerId] || (players[p.playerId] = { nick: p.nick, avatar: p.avatar, matches: 0, kills: 0, deaths: 0, assists: 0, clutches: 0, sick: 0, fk: 0, fd: 0, dmg: 0, rounds: 0 })
+          tot.nick = p.nick || tot.nick
+          tot.avatar = p.avatar || tot.avatar
+          tot.matches++; tot.kills += p.kills; tot.deaths += p.deaths; tot.assists += p.assists
+          tot.clutches += p.clutches; tot.sick += p.sickFrags; tot.fk += p.firstKills; tot.fd += p.firstDeaths
+          tot.dmg += p.dmg; tot.rounds += rounds
+          const h = { nick: p.nick, playerId: p.playerId, ctx }
+          consider('matchKills', p.kills, h)
+          consider('matchDeaths', p.deaths, h)
+          consider('matchAssists', p.assists, h)
+          consider('matchAdr', rounds > 0 ? Math.round(p.dmg / rounds) : null, h)
+          consider('matchPlusMinus', p.kills - p.deaths, h)
+          consider('matchSick', p.sickFrags, h)
+        }
       }
 
       for (const k of kills) {
