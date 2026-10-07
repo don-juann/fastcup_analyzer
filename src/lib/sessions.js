@@ -9,6 +9,9 @@
 // then slicing the boundary at an arbitrary point inside it rather than where
 // the players actually changed.
 //
+// A BO3/BO5 series always forms a session of its own, apart from the BO1s
+// played before or after it.
+//
 // Roster-awareness is opt-in: pass each match's `.rosterIds` (all participant
 // ids) if you have them. Callers that don't fetch rosters (cheaper, but blind
 // to this failure mode) just get the old time/count-only behavior — matches
@@ -28,6 +31,10 @@ const sameRoster = (a, b) => {
   return b.every((id) => setA.has(id))
 }
 
+// A best-of-3/5 series (one fastcup match holding several maps), as opposed to
+// a plain single-map match.
+const isSeries = (m) => (m.bestOf ?? 1) > 1 || (m.maps?.length ?? 0) > 1
+
 // matches need: { id, startedAt(ms) } at minimum for grouping, plus optional
 // `.rosterIds` (array of participant ids) to also split on roster changes.
 export function groupIntoSessions(matches, {
@@ -43,8 +50,10 @@ export function groupIntoSessions(matches, {
     const tooFar = current && m.startedAt - current.endedAt > gapMs
     const tooMany = current && current.matches.length >= maxMatches
     const rosterChanged = current && !sameRoster(current.lastRosterIds, m.rosterIds)
-    if (!current || tooFar || tooMany || rosterChanged) {
-      current = { startedAt: m.startedAt, endedAt: m.startedAt, matches: [] }
+    // a BO3/BO5 is its own session: never merged with the matches before or after it
+    const seriesBreak = current && (current.series || isSeries(m))
+    if (!current || tooFar || tooMany || rosterChanged || seriesBreak) {
+      current = { startedAt: m.startedAt, endedAt: m.startedAt, matches: [], series: isSeries(m) }
       sessions.push(current)
     }
     current.matches.push(m)
@@ -56,6 +65,7 @@ export function groupIntoSessions(matches, {
     s.id = String(s.startedAt)
     s.matches.sort((a, b) => a.startedAt - b.startedAt)
     delete s.lastRosterIds
+    delete s.series
   })
   return sessions.reverse() // newest session first
 }

@@ -111,7 +111,7 @@ function SessionCard({ session, userId, autoLoad }) {
     <section className="session">
       <div className="session-head">
         <h2>{dateLabel}</h2>
-        <span className="count">{t('analyzer.maps', { n: chips.length })}</span>
+        <span className="count">{t(chips.length === 1 ? 'analyzer.map' : 'analyzer.maps', { n: chips.length })}</span>
       </div>
 
       <div className="filters">

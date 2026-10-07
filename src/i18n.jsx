@@ -59,6 +59,7 @@ export const STRINGS = {
     'analyzer.won': '{w}/{n} won',
     'analyzer.matches': '{n} matches',
     'analyzer.maps': '{n} maps',
+    'analyzer.map': '{n} map',
     'analyzer.sickTip': 'one-shots + no-scopes + airshots + wallbangs',
     'sick.oneShots': 'one-shots',
     'sick.noScopes': 'no-scopes',
@@ -97,6 +98,7 @@ export const STRINGS = {
     'scope.noSessions': 'no sessions in this range yet',
     'scope.emptyRange': 'no matches in this range yet',
     'scope.maps': '{n} maps',
+    'scope.map': '{n} map',
 
     'roster.title': 'roster builder',
     'roster.intro': 'drag players into two 5-player teams and check the balance — skill scores are pulled from real match history, not fastcup rating.',
@@ -169,6 +171,7 @@ export const STRINGS = {
     'analyzer.won': '{w}/{n} жеңіс',
     'analyzer.matches': '{n} матч',
     'analyzer.maps': '{n} карта',
+    'analyzer.map': '{n} карта',
     'analyzer.sickTip': 'бір оқпен + ноускоппен + секіріп + жарды тесіп',
     'sick.oneShots': 'бір оқпен',
     'sick.noScopes': 'ноускоппен',
@@ -207,6 +210,7 @@ export const STRINGS = {
     'scope.noSessions': 'бұл аралықта сессия жоқ',
     'scope.emptyRange': 'бұл аралықта матч жоқ',
     'scope.maps': '{n} карта',
+    'scope.map': '{n} карта',
 
     'roster.title': 'құрам құрушы',
     'roster.intro': 'ойыншыларды екі 5 адамдық құрамға сүйреп, теңгерімін тексер — ұпайлар нақты матч тарихынан алынады, fastcup рейтингінен емес.',
